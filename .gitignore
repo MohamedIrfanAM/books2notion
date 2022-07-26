@@ -1,3 +1,4 @@
 credentials.json
 token.json
-parse_progress.json
+secrets.json
+__pycache__
