@@ -1,6 +1,5 @@
 import google_api
 import re
-import json
 
 class document:
     def __init__(self,id):

@@ -1,4 +1,5 @@
 import google_api
+import re
 
 class book:
     def __init__(self,name):
@@ -13,7 +14,17 @@ class book:
                 self.authors = book["volumeInfo"]["authors"]
                 self.publisher = book["volumeInfo"]["publisher"]
                 self.publishedDate = book["volumeInfo"]["publishedDate"]
-        book_query_response = gbooks.volumes().list(q = name,orderBy = "relevance").execute()["items"][0]["volumeInfo"]
+        query = f"intitle:{self.name} inauthor:{self.authors[0]} inpublisher:{self.publisher}"
+        book_query_response = gbooks.volumes().list(q = query,orderBy = "relevance",langRestrict ="en-GB,en").execute()["items"][0]["volumeInfo"]
         self.thumbnail = book_query_response["imageLinks"]["thumbnail"]
         self.about = book_query_response["description"]
         self.categories = book_query_response["categories"]
+        self.isbn = book_query_response["industryIdentifiers"][0]["identifier"]
+        self.page_count = book_query_response["pageCount"]
+
+        regex_result = re.search(r"(http://books.google.com/books/content\?id=)(\w+)(&.*)",self.thumbnail)
+        self.id = regex_result.group(2)
+
+        book_get_response = gbooks.volumes().get(volumeId = self.id).execute()["volumeInfo"]
+        self.thumbnail_large = list(book_get_response["imageLinks"].values())[-1]
+
