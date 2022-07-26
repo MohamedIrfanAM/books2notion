@@ -9,8 +9,9 @@ def ids():
 
     folderID = secret_data["folder_id"]
     query = f"parents = '{folderID}'"
+    fields= "files(id,modifiedTime)"
 
-    response = drive.files().list(q=query).execute()
+    response = drive.files().list(q=query,fields=fields).execute()
     files = response.get('files')
     nextPageToken = response.get('nextPageToken')
 
@@ -21,6 +22,10 @@ def ids():
     
     id_list = []
     for file in files:
-        id_list.append(file['id'])
+        file_info = {
+            "docs_id":file["id"],
+            "modified_time":file["modifiedTime"]
+        }
+        id_list.append(file_info)
     return id_list
 
