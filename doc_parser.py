@@ -19,13 +19,31 @@ class document:
         self.chapters = []
         self.new_words = []
         self.highlights = []
+
+        self.total_highlights = 0
+        self.total_notes = 0
+        chapter_highlights = 0
+        chapter_notes = 0
+
         for i in range(11,len(self.json["body"]["content"])):
             try:
                 chapter = self.json["body"]["content"][i]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
                 if chapter and chapter != "\n":
-                    self.chapters.append(chapter)
+                    chapter_dic = {
+                        "title":chapter,
+                        "highlights":0,
+                        "notes":0
+                    }
+                    self.chapters.append(chapter_dic)
                     self.highlights.append([])
                     self.new_words.append([])
+
+                    if len(self.chapters)-1:
+                        self.chapters[len(self.chapters)-2]["highlights"] = chapter_highlights
+                        self.chapters[len(self.chapters)-2]["notes"] = chapter_notes
+                        chapter_notes = 0
+                        chapter_highlights = 0
+                    
             except:
                 pass
             try:
@@ -42,6 +60,8 @@ class document:
                     note = None
                 else:
                     date = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][4]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
+                    self.total_notes += 1
+                    chapter_notes += 1
 
                 if color == 1:
                     color = "red"
@@ -61,10 +81,15 @@ class document:
                         "url":url,
                         "color":color
                     }
+                    self.total_highlights += 1
+                    chapter_highlights += 1
                     if color == 1:
                         self.new_words[len(self.chapters)-1].append(highlight_data)
                     else:
                         self.highlights[len(self.chapters)-1].append(highlight_data)
             except:
                 pass
+        else:
+            self.chapters[len(self.chapters)-1]["notes"] = chapter_notes
+            self.chapters[len(self.chapters)-1]["highlights"] = chapter_highlights
 
