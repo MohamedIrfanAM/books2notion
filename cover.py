@@ -4,19 +4,19 @@ import shutil # save img locally
 import json
 import re
 import base64
-import asyncio
+import concurrent.futures
 from io import BytesIO  
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-async def add_margin(pil_img, right, left):
+def add_margin(pil_img, right, left):
     width, height = pil_img.size
     new_width = width + right + left
     result = Image.new("RGBA", (new_width, height),(255,0,0,0))
     result.paste(pil_img, (left, 0))
     return result
 
-async def to_base64(image):
+def to_base64(image):
     buffered = BytesIO()
     image.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue())
@@ -31,7 +31,7 @@ def downlaod(url,file_name):
     else:
         print('Image Couldn\'t be retrieved')
 
-async def upload(img_str):
+def upload(img_str):
     secret_file = open('secrets.json') 
     secret_data = json.load(secret_file) 
     image_host_key = secret_data["image_host_key"]
@@ -45,18 +45,19 @@ async def upload(img_str):
         "format":"json"
     }
     with requests.Session() as s:
-        retry = Retry(connect=3, backoff_factor=0.5)
+        retry = Retry(connect=3, backoff_factor=0.1)
         adapter = HTTPAdapter(max_retries=retry)
         s.mount('http://', adapter)
         s.mount('https://', adapter)
         r = s.post(image_host_url,data=data)
         return r.json()["image"]["url"]
 
-async def get_url(url):
+def get_url(url):
     #ID and file_name
-    id = re.search(r"(https://books.google.com/books/content\?id=)(\w+)(&.*)",url).group(2)
+    id = re.search(r"(https?://books.google.com/books/content\?id=)(\w+)(&.*)",url).group(2)
     file_name = f"covers/{id}.png"
     #Downlaod thumbnail
+    print("Starting to download thumbnail")
     downlaod(url,file_name)
     thumbnail= Image.open(file_name)
     #Dimensions
@@ -65,25 +66,32 @@ async def get_url(url):
     icon_margin = int((height-width)/2)
     cover_width = int((height*7)/5)
     cover_margin = int((cover_width-width)/1.09)
-    #Add margins
-    icon_add_margin_task = asyncio.create_task(add_margin(thumbnail,icon_margin,icon_margin))
-    cover_add_margin_task = asyncio.create_task(add_margin(thumbnail,cover_margin,cover_margin))
-    icon_image = await icon_add_margin_task
-    cover_image = await cover_add_margin_task
-    #To base64
-    icon_to_base64_task = asyncio.create_task(to_base64(icon_image))
-    cover_to_base64_task = asyncio.create_task(to_base64(cover_image))
-    icon_str = await icon_to_base64_task 
-    cover_str = await cover_to_base64_task
-    #Upload
-    icon_upload_task = asyncio.create_task(upload(icon_str))
-    cover_upload_task = asyncio.create_task(upload(cover_str))
-    icon_url = await icon_upload_task
-    cover_url = await cover_upload_task 
-    
-    urls = {
-        "cover":cover_url,
-        "icon":icon_url
-    }
-    return urls
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        #Add margins
+        icon_add_margin = executor.submit(add_margin,thumbnail,icon_margin,icon_margin)
+        cover_add_margin = executor.submit(add_margin,thumbnail,cover_margin,cover_margin)
+        print("Starting to add margins")
+        icon_image = icon_add_margin.result()
+        cover_image = cover_add_margin.result()
+        print("Margin adding completed")
+        #To base64
+        icon_to_base64 = executor.submit(to_base64,icon_image)
+        cover_to_base64 = executor.submit(to_base64,cover_image)
+        print("Encoding to base64")
+        icon_str = icon_to_base64.result()
+        cover_str = cover_to_base64.result() 
+        print("finished encoding")
+        #Upload
+        icon_upload = executor.submit(upload,icon_str)
+        cover_upload = executor.submit(upload,cover_str)
+        print("starting to upload")
+        icon_url = icon_upload.result()
+        cover_url = cover_upload.result()
+        print("finished upload")
+        
+        urls = {
+            "icon":icon_url,
+            "cover":cover_url
+        }
+        return urls
 
