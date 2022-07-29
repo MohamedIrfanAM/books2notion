@@ -1,9 +1,13 @@
 import list_docs
 import notion_query
 import doc_parser
+import cover
 from metadata_fetcher import book
 from datetime import datetime,timedelta
+import logging
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d/%m/%Y %H:%M:%S' , filename="books2notion.log" , filemode="w")
+logger = logging.getLogger()
 
 def time_diff(doc):
     if notion_query.get_last_sync(doc["docs_id"]):
@@ -27,8 +31,6 @@ def main():
         if min_diff > 5 or not min_diff:
             document = doc_parser.document(doc["docs_id"])
             metadata = book(document.title)
-
-
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,8 @@
 import google_api
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 def ids():
     drive = google_api.connect("drive","v3")
@@ -20,6 +23,7 @@ def ids():
         files.extend(response.get('files'))
         nextPageToken = response.get('nextPageToken')
     
+    logger.info(f"listing docs under folderID - {folderID}")
     id_list = []
     for file in files:
         file_info = {
@@ -27,5 +31,6 @@ def ids():
             "modified_time":file["modifiedTime"]
         }
         id_list.append(file_info)
+    logger.info("finished listing docs")
     return id_list
 

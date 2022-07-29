@@ -5,8 +5,9 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import logging
 
-
+logger = logging.getLogger(__name__)
 
 def connect(api,version):
     CLIENT_FILE = "credentials.json"
@@ -28,5 +29,5 @@ def connect(api,version):
         service = build(api,version,credentials=creds)
     
     except HttpError as err:
-        print(err)
+        logger.error(err)
     return service

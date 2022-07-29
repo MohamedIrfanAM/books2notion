@@ -1,5 +1,8 @@
 import requests
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 secret_file = open('secrets.json') 
 secret_data = json.load(secret_file) 
@@ -20,6 +23,7 @@ headers = {
 }
 
 def get_last_sync(docs_id):
+    logger.info(f"getting last_sync time for docs_id - {docs_id}")
     filter_data = {
         "filter": {
             "property": "docs_id",
@@ -32,8 +36,10 @@ def get_last_sync(docs_id):
     try:
         response = requests.post(query_url,headers=headers,data=filter_data)
         last_sync_time = response.json()["results"][0]["properties"]["last_sync"]["date"]["start"]
+        logger.info("Found last_sync time")
         return last_sync_time
     except:
+        logger.error("Failed to find last_sync time")
         return None
 
 def create_page(icon_url,cover_url,properties):
@@ -56,6 +62,7 @@ def create_page(icon_url,cover_url,properties):
     page_data = json.dumps(page_data)
     try:
         response = requests.post(page_url,headers=headers,data=page_data)
+        logger.info("Successfully createed page")
     except:
-            print("create page response error")
+        logger.error("Failed to create page,response error")
 

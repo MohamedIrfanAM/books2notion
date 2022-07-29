@@ -1,5 +1,8 @@
 import google_api
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 class document:
     def __init__(self,id):
@@ -8,6 +11,7 @@ class document:
         self.id = id
         self.json = docs.documents().get(documentId=id).execute()
         self.title = self.json["title"][12:-1]
+        logger.info(f"Parsing {self.title}({self.id}) started")
         self.author = self.json["body"]["content"][2]["table"]["tableRows"][0]["tableCells"][1]["content"][1]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
         self.publisher = self.json["body"]["content"][2]["table"]["tableRows"][0]["tableCells"][1]["content"][2]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
         self.highlight_count = self.json["body"]["content"][7]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
@@ -92,3 +96,4 @@ class document:
             self.chapters[len(self.chapters)-1]["notes"] = chapter_notes
             self.chapters[len(self.chapters)-1]["highlights"] = chapter_highlights
 
+        logger.info(f"Parsing {self.title}({self.id}) completed")

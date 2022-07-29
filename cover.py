@@ -8,6 +8,9 @@ import concurrent.futures
 from io import BytesIO  
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import logging
+ 
+logger = logging.getLogger(__name__)
 
 def add_margin(pil_img, right, left):
     width, height = pil_img.size
@@ -27,9 +30,9 @@ def downlaod(url,file_name):
     if res.status_code == 200:
         with open(file_name,'wb') as f:
             shutil.copyfileobj(res.raw, f)
-        print('Image sucessfully Downloaded: ',file_name)
+        logger.info(f"Image successfully Downloaded - {file_name}")
     else:
-        print('Image Couldn\'t be retrieved')
+        logger.error("Failed to Download image")
 
 def upload(img_str):
     secret_file = open('secrets.json') 
@@ -57,7 +60,7 @@ def get_url(url):
     id = re.search(r"(https?://books.google.com/books/content\?id=)(\w+)(&.*)",url).group(2)
     file_name = f"covers/{id}.png"
     #Downlaod thumbnail
-    print("Starting to download thumbnail")
+    logger.info("Starting to Download image")
     downlaod(url,file_name)
     thumbnail= Image.open(file_name)
     #Dimensions
@@ -70,24 +73,24 @@ def get_url(url):
         #Add margins
         icon_add_margin = executor.submit(add_margin,thumbnail,icon_margin,icon_margin)
         cover_add_margin = executor.submit(add_margin,thumbnail,cover_margin,cover_margin)
-        print("Starting to add margins")
+        logger.info("Starting to add margins to images")
         icon_image = icon_add_margin.result()
         cover_image = cover_add_margin.result()
-        print("Margin adding completed")
+        logger.info("Margin adding completed")
         #To base64
         icon_to_base64 = executor.submit(to_base64,icon_image)
         cover_to_base64 = executor.submit(to_base64,cover_image)
-        print("Encoding to base64")
+        logger.info("Encoding images to base64 string")
         icon_str = icon_to_base64.result()
         cover_str = cover_to_base64.result() 
-        print("finished encoding")
+        logger.info("finished encoding")
         #Upload
         icon_upload = executor.submit(upload,icon_str)
         cover_upload = executor.submit(upload,cover_str)
-        print("starting to upload")
+        logger.info("Starting to upload images")
         icon_url = icon_upload.result()
         cover_url = cover_upload.result()
-        print("finished upload")
+        logger.info("Upload completed")
         
         urls = {
             "icon":icon_url,
