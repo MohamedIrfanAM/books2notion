@@ -1,6 +1,6 @@
 import list_docs
 import notion_query
-import doc_parser
+from doc_parser import document
 import cover
 from metadata_fetcher import book
 from datetime import datetime,timedelta
@@ -10,9 +10,10 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger()
 
 def time_diff(doc):
-    if notion_query.get_last_sync(doc["docs_id"]):
+    notion_last_sync_time = notion_query.get_last_sync(doc["docs_id"]) 
+    if notion_last_sync_time is not None:
 
-        notion_time_string = notion_query.get_last_sync(doc["docs_id"])[:-10]
+        notion_time_string = notion_last_sync_time(doc["docs_id"])[:-10]
         doc_time_string = doc["modified_time"][:-5]
 
         notion_time = datetime.strptime(notion_time_string,"%Y-%m-%dT%H:%M:%S")
@@ -24,13 +25,25 @@ def time_diff(doc):
     else:
         return None
 
+
+
 def main():
     docs = list_docs.ids()
     for doc in docs:
-        min_diff = time_diff(doc)
-        if min_diff > 5 or not min_diff:
-            document = doc_parser.document(doc["docs_id"])
-            metadata = book(document.title)
+        minute_diff = time_diff(doc)
+        if minute_diff is None or minute_diff > 5:
+            parsed_document = document(doc["docs_id"])
+            if minute_diff is not None:
+                pass
+            else:
+                metadata = book(parsed_document.title)
+                urls = cover.get_url(metadata.thumbnail)
+                properties = notion_query.get_page_properties(parsed_document,metadata,doc["docs_id"])
+                notion_query.create_page(urls, properties)
+
+
+
+
 
 if __name__ == "__main__":
     main()

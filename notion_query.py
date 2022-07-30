@@ -42,19 +42,19 @@ def get_last_sync(docs_id):
         logger.error("Failed to find last_sync time")
         return None
 
-def create_page(icon_url,cover_url,properties):
+def create_page(urls,properties):
     page_data = {
         "parent": { 
             "database_id": database_id 
         },
         "icon": {
             "external": {
-                "url": icon_url
+                "url": urls["icon"]
             }
         },
         "cover": {
             "external": {
-                "url": cover_url
+                "url": urls["cover"] 
             }
         },
         "properties": properties 
@@ -62,7 +62,82 @@ def create_page(icon_url,cover_url,properties):
     page_data = json.dumps(page_data)
     try:
         response = requests.post(page_url,headers=headers,data=page_data)
-        logger.info("Successfully createed page")
+        logger.info(f"Successfully createed page - {response.status_code}")
     except:
         logger.error("Failed to create page,response error")
 
+
+def get_page_properties(parsed_document,metadata,docs_id):
+
+    properties = {
+            "Title": {
+                "title":[
+                    {
+                        "text": {
+                            "content": metadata.name
+                        }
+                    }
+                ]
+            },
+            "Author": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": ','.join([author for author in metadata.authors])
+                  },
+                }
+              ]
+            },
+            "Publisher": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": metadata.publisher
+                  },
+                }
+              ]
+            },
+            "docs_id": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": docs_id
+                  },
+                }
+              ]
+            },
+            "books_id": {
+              "rich_text": [
+                {
+                  "type": "text",
+                  "text": {
+                    "content": metadata.id
+                  },
+                }
+              ]
+            },
+            "Highlight Count": {
+                "number": int(parsed_document.total_highlights)
+            },
+            "Page Count": {
+                "number": int(metadata.page_count)
+            },
+            "Note Count": {
+                "number": int(parsed_document.total_notes)
+            },
+            "ISBN": {
+                "number": int(metadata.isbn)
+            },
+            "Publish Date": {
+              "date": {
+                "start": metadata.publishedDate
+              }
+            },
+            "Link": {
+                "url": metadata.url
+            }
+        }
+    return properties

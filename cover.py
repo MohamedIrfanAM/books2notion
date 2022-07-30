@@ -57,7 +57,7 @@ def upload(img_str):
 
 def get_url(url):
     #ID and file_name
-    id = re.search(r"(https?://books.google.com/books/content\?id=)(\w+)(&.*)",url).group(2)
+    id = re.search(r"(https?:\/\/books.google.com\/books\/(publisher\/)?content\?id=)(.{12})(.*)",url).group(3)
     file_name = f"covers/{id}.png"
     #Downlaod thumbnail
     logger.info("Starting to Download image")

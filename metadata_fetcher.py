@@ -17,7 +17,6 @@ class book:
                 self.url = book["accessInfo"]["webReaderLink"][0:-39]
                 self.authors = book["volumeInfo"]["authors"]
                 self.publisher = book["volumeInfo"]["publisher"]
-                self.publishedDate = book["volumeInfo"]["publishedDate"]
         query = f"intitle:{self.name} inauthor:{self.authors[0]} inpublisher:{self.publisher}"
         book_query_response = gbooks.volumes().list(q = query,orderBy = "relevance",langRestrict ="en-GB,en").execute()["items"][0]["volumeInfo"]
         self.thumbnail_small = book_query_response["imageLinks"]["thumbnail"]
@@ -25,9 +24,11 @@ class book:
         self.categories = book_query_response["categories"]
         self.isbn = book_query_response["industryIdentifiers"][0]["identifier"]
         self.page_count = book_query_response["pageCount"]
+        self.publishedDate = book_query_response["publishedDate"]
 
-        regex_result = re.search(r"(https?://books.google.com/books/content\?id=)(\w+)(&.*)",self.thumbnail_small)
-        self.id = regex_result.group(2)
+        regex_result = re.search(r"(https?:\/\/books.google.com\/books\/content\?id=)(.{12})(.*)",self.thumbnail_small)
+        if regex_result is not None:
+            self.id = regex_result.group(2)
 
         book_get_response = gbooks.volumes().get(volumeId = self.id).execute()["volumeInfo"]
         if len(book_get_response["imageLinks"]) == 2:
