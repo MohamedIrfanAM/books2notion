@@ -5,8 +5,16 @@ import cover
 from metadata_fetcher import book
 from datetime import datetime,timedelta
 import logging
+import sys
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d/%m/%Y %H:%M:%S' , filename="books2notion.log" , filemode="w")
+logging.basicConfig(
+        level=logging.DEBUG, 
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+        datefmt='%d/%m/%Y %H:%M:%S' ,     
+        handlers=[
+        logging.FileHandler("books2notion.log",'w'),
+        logging.StreamHandler(sys.stdout),
+    ])
 logger = logging.getLogger()
 
 def time_diff(doc):
