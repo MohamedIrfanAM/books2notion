@@ -17,40 +17,45 @@ logging.basicConfig(
     ])
 logger = logging.getLogger()
 
-def time_diff(doc):
-    notion_last_sync_time = notion_query.get_last_sync(doc["docs_id"]) 
-    if notion_last_sync_time is not None:
-
-        notion_time_string = notion_last_sync_time(doc["docs_id"])[:-10]
+def validate_time_diff(doc):
+    notion_last_sync_info = notion_query.get_last_sync(doc["docs_id"])
+    if notion_last_sync_info is not None:
+        logger.info(f"Found existing notion page having docs_id - {doc['docs_id']}")
+        notion_last_sync_time = notion_last_sync_info["last_sync_time"]
+        notion_last_sync_page_id = notion_last_sync_info["page_id"]
+        notion_time_string = notion_last_sync_time[:-10]
         doc_time_string = doc["modified_time"][:-5]
-
         notion_time = datetime.strptime(notion_time_string,"%Y-%m-%dT%H:%M:%S")
         doc_time = datetime.strptime(doc_time_string,"%Y-%m-%dT%H:%M:%S")
         doc_time = doc_time + timedelta(hours=5,minutes=30)
         
         time_diff = (doc_time - notion_time).total_seconds()/60
-        return time_diff
+        if time_diff > 5:
+            logger.info("Time differance is greater than 5 minutes, intitiializing syncing process")
+            return notion_last_sync_page_id
+        else:
+            logger.info("Time difference is less than 5 minutes")
+            return False
     else:
+        logger.info(f"couldn't find existing notion page for docs_id - {doc['docs_id']}, creating a new page.")
         return None
-
 
 
 def main():
     docs = list_docs.ids()
     for doc in docs:
-        minute_diff = time_diff(doc)
-        if minute_diff is None or minute_diff > 5:
+        last_sync_response = validate_time_diff(doc)
+        if last_sync_response is not False:
             parsed_document = document(doc["docs_id"])
-            if minute_diff is not None:
-                pass
+            if last_sync_response is not None:
+                page_id = last_sync_response
             else:
                 metadata = book(parsed_document.title)
                 urls = cover.get_url(metadata.thumbnail)
                 properties = notion_query.get_page_properties(parsed_document,metadata,doc["docs_id"])
-                notion_query.create_page(urls, properties)
-
-
-
+                page_id = notion_query.create_page(urls, properties)
+        else:
+            logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 
 
 if __name__ == "__main__":

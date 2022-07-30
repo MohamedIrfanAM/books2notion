@@ -36,10 +36,19 @@ def get_last_sync(docs_id):
     try:
         response = requests.post(query_url,headers=headers,data=filter_data)
         last_sync_time = response.json()["results"][0]["properties"]["last_sync"]["date"]["start"]
-        logger.info("Found last_sync time")
-        return last_sync_time
+        page_id = response.json()["results"][0]["id"]
+        last_sync_info = {
+                "last_sync_time":last_sync_time,
+                "page_id":page_id
+                }
+        if response.status_code == 200 and last_sync_time is not None:
+            logger.info(f"Found last_sync time and PageID = {page_id}")
+            return last_sync_info
+        else:
+            logger.info("Last sync time is None")
+            return None
     except:
-        logger.error("Failed to find last_sync time")
+        logger.error("Failed to find last_sync time or PageID")
         return None
 
 def create_page(urls,properties):
@@ -62,13 +71,15 @@ def create_page(urls,properties):
     page_data = json.dumps(page_data)
     try:
         response = requests.post(page_url,headers=headers,data=page_data)
-        logger.info(f"Successfully createed page - {response.status_code}")
+        id = response.json()["id"]
+        logger.info(f"Successfully createed page - {response.status_code} - PageID = {id}")
+        return id
     except:
         logger.error("Failed to create page,response error")
-
+        return None
 
 def get_page_properties(parsed_document,metadata,docs_id):
-
+    logger.info("Constructing properties")
     properties = {
             "Title": {
                 "title":[
@@ -101,8 +112,7 @@ def get_page_properties(parsed_document,metadata,docs_id):
             },
             "docs_id": {
               "rich_text": [
-                {
-                  "type": "text",
+                { "type": "text",
                   "text": {
                     "content": docs_id
                   },
@@ -140,4 +150,6 @@ def get_page_properties(parsed_document,metadata,docs_id):
                 "url": metadata.url
             }
         }
+    logger.info("Returning page properties")
     return properties
+
