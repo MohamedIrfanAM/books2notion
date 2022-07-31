@@ -51,7 +51,7 @@ def main():
             if last_sync_response is not None:
                 page_id = last_sync_response
                 page_id = re.sub("-","",str(page_id))
-                notion_query.delete_page(page_id)
+                notion_query.clear_page_content(page_id)
             else:
                 metadata = book(parsed_document.title)
                 urls = cover.get_url(metadata.thumbnail)

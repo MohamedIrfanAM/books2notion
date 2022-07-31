@@ -175,5 +175,17 @@ def get_blocks(page_id):
     except:
         logger.error("get_blocks requests error")
 
-def delete_page(page_id):
+def clear_page_content(page_id):
     blocks = get_blocks(page_id)
+    count = 0
+    headers_count = 3 
+    if blocks is not None:
+        logger.info(f"Starting to delete {len(blocks)-headers_count} blocks")
+        for block in blocks:
+            if count >= headers_count:
+                block_id = block["id"]
+                delete_url = f"{block_url}{block_id}"
+                requests.delete(delete_url, headers=headers)
+            count += 1
+        logger.info("finished deleting all content blocks")
+
