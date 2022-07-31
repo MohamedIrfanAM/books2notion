@@ -14,6 +14,7 @@ secret_file.close()
 
 query_url = f"https://api.notion.com/v1/databases/{database_id}/query"
 page_url = "https://api.notion.com/v1/pages" 
+block_url = "https://api.notion.com/v1/blocks/"
 
 headers = {
     'Authorization': f'Bearer {key}',
@@ -153,3 +154,26 @@ def get_page_properties(parsed_document,metadata,docs_id):
     logger.info("Returning page properties")
     return properties
 
+def get_blocks(page_id):
+    retrieve_url = f"{block_url}{page_id}/children"
+    params = { "page_size" : 100}
+    blocks = []
+    try:
+        response = requests.get(retrieve_url,headers=headers,params=params)
+        response_data = response.json()
+        logger.info(f"status_code from get_blocks - {response.status_code}")
+        blocks.extend(response_data["results"])
+        while response_data["has_more"]:
+            params = {
+                    "page_size":100,
+                    "start_cursor":response_data["next_cursor"]
+                    }
+            response = requests.get(retrieve_url,headers=headers,params=params)
+            response_data = response.json()
+            blocks.extend(response_data["results"])
+        return blocks
+    except:
+        logger.error("get_blocks requests error")
+
+def delete_page(page_id):
+    blocks = get_blocks(page_id)

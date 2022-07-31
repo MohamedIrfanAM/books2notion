@@ -6,6 +6,7 @@ from metadata_fetcher import book
 from datetime import datetime,timedelta
 import logging
 import sys
+import re
 
 logging.basicConfig(
         level=logging.DEBUG, 
@@ -49,11 +50,14 @@ def main():
             parsed_document = document(doc["docs_id"])
             if last_sync_response is not None:
                 page_id = last_sync_response
+                page_id = re.sub("-","",str(page_id))
+                notion_query.delete_page(page_id)
             else:
                 metadata = book(parsed_document.title)
                 urls = cover.get_url(metadata.thumbnail)
                 properties = notion_query.get_page_properties(parsed_document,metadata,doc["docs_id"])
-                page_id = notion_query.create_page(urls, properties)
+                page_id = str(notion_query.create_page(urls, properties))
+                page_id = re.sub("-","",str(page_id))
         else:
             logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 
