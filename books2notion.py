@@ -59,6 +59,7 @@ def main():
                 children = notion_query.get_header_children(metadata)
                 page_id = str(notion_query.create_page(urls,properties,children))
                 page_id = re.sub("-","",str(page_id))
+                new_words_id = notion_query.create_new_words_database(page_id)
         else:
             logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 

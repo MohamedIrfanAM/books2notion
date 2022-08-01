@@ -15,6 +15,7 @@ secret_file.close()
 query_url = f"https://api.notion.com/v1/databases/{database_id}/query"
 page_url = "https://api.notion.com/v1/pages" 
 block_url = "https://api.notion.com/v1/blocks/"
+database_url = "https://api.notion.com/v1/databases"
 
 headers = {
     'Authorization': f'Bearer {key}',
@@ -115,7 +116,9 @@ def get_page_properties(parsed_document,metadata,docs_id):
             "docs_id": {
               "rich_text": [
                 { "type": "text",
-                  "text": { "content": docs_id },
+                  "text": {
+                    "content": docs_id
+                  },
                 }
               ]
             },
@@ -265,3 +268,48 @@ def clear_page_content(page_id):
             count += 1
         logger.info("finished deleting all content blocks")
 
+def create_new_words_database(page_id):
+    data = {
+        "parent": {
+          "type": "page_id",
+          "page_id": page_id
+        },
+        "title": [
+         {
+           "type": "text",
+           "text": {
+             "content": "New Words",
+             "link": None
+           }
+         }
+        ],
+        "properties":{
+            "Word":{
+                "title":{}
+            },
+            "Definition": {
+              "rich_text": {}
+            },
+            "PageNo": {
+              "number": {}
+            },
+            "Link":{
+                "url":{}
+            }
+        },
+        "icon": {
+            "external": {
+                "url":"https://iili.io/SvVE5F.png"
+            }
+        },
+    }
+    data = json.dumps(data)
+
+    try:
+        response = requests.post(database_url,headers=headers,data=data)
+        id = response.json()["id"]
+        logger.info(f"Successfully createed new words database - {response.status_code} - DatabaseID = {id}")
+        return id
+    except:
+        logger.error("Failed to create new words database,response error")
+        return None
