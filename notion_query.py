@@ -52,7 +52,7 @@ def get_last_sync(docs_id):
         logger.error("Failed to find last_sync time or PageID")
         return None
 
-def create_page(urls,properties):
+def create_page(urls,properties,children):
     page_data = {
         "parent": { 
             "database_id": database_id 
@@ -67,7 +67,8 @@ def create_page(urls,properties):
                 "url": urls["cover"] 
             }
         },
-        "properties": properties 
+        "properties": properties,
+        "children": children
     }
     page_data = json.dumps(page_data)
     try:
@@ -114,9 +115,7 @@ def get_page_properties(parsed_document,metadata,docs_id):
             "docs_id": {
               "rich_text": [
                 { "type": "text",
-                  "text": {
-                    "content": docs_id
-                  },
+                  "text": { "content": docs_id },
                 }
               ]
             },
@@ -142,17 +141,94 @@ def get_page_properties(parsed_document,metadata,docs_id):
             "ISBN": {
                 "number": int(metadata.isbn)
             },
-            "Publish Date": {
-              "date": {
-                "start": metadata.publishedDate
-              }
-            },
             "Link": {
                 "url": metadata.url
             }
         }
     logger.info("Returning page properties")
     return properties
+
+def get_header_children(metadata):
+    logger.info("Contructing heading content children")
+    children = [
+        {
+            "object":"block",
+            "type":"toggle",
+            'toggle': {
+             'rich_text': [
+                {
+                 'type': 'text',
+                 'text': {
+                   'content': 'Table of Contents',
+                   'link': None
+                 },
+                 'annotations': {
+                   'bold': True,
+                   'italic': False,
+                   'strikethrough': False,
+                   'underline': True,
+                   'code': False,
+                   'color': 'default'
+                 },
+                 'plain_text': 'Table of Contents',
+                 'href': None
+                }
+                ],
+                'color': 'default',
+                "children": [
+                {
+                  "type": "table_of_contents",
+                  "table_of_contents": {
+                    "color": "default"
+                  }
+                }
+                 ]
+             },
+          },
+
+        {
+            "object":"block",
+            "type":"toggle",
+            'toggle': {
+             'rich_text': [
+                {
+                 'type': 'text',
+                 'text': {
+                   'content': 'About',
+                   'link': None
+                 },
+                 'annotations': {
+                   'bold': True,
+                   'italic': False,
+                   'strikethrough': False,
+                   'underline': True,
+                   'code': False,
+                   'color': 'default'
+                 },
+                 'plain_text': 'About',
+                 'href': None
+                }
+                ],
+                'color': 'default',
+                "children": [
+                {
+                  "type": "paragraph",
+                  "paragraph": {
+                      "rich_text": [{
+                          "type":"text",
+                          "text": {
+                              "content":metadata.about,
+                              "link":None
+                              }
+                          }]
+                  }
+                }
+                 ]
+             },
+          },
+    ]
+    logger.info("Returning children array")
+    return children
 
 def get_blocks(page_id):
     retrieve_url = f"{block_url}{page_id}/children"
@@ -167,7 +243,7 @@ def get_blocks(page_id):
             params = {
                     "page_size":100,
                     "start_cursor":response_data["next_cursor"]
-                    }
+            }
             response = requests.get(retrieve_url,headers=headers,params=params)
             response_data = response.json()
             blocks.extend(response_data["results"])
