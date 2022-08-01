@@ -25,6 +25,7 @@ class document:
 
         self.total_highlights = 0
         self.total_notes = 0
+        self.total_new_words = 0
         chapter_highlights = 0
         chapter_notes = 0
 
@@ -84,11 +85,12 @@ class document:
                         "url":url,
                         "color":color
                     }
-                    self.total_highlights += 1
-                    chapter_highlights += 1
-                    if color == 1:
+                    if color == "red":
                         self.new_words[len(self.chapters)-1].append(highlight_data)
+                        self.total_new_words += 1
                     else:
+                        self.total_highlights += 1
+                        chapter_highlights += 1
                         self.highlights[len(self.chapters)-1].append(highlight_data)
             except:
                 pass

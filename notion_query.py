@@ -135,6 +135,9 @@ def get_page_properties(parsed_document,metadata,docs_id):
             "Highlight Count": {
                 "number": int(parsed_document.total_highlights)
             },
+            "New Words Count": {
+                "number": int(parsed_document.total_new_words)
+            },
             "Page Count": {
                 "number": int(metadata.page_count)
             },
