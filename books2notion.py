@@ -68,6 +68,15 @@ def main():
 
             for new_word in parsed_document.new_words:
                 notion_query.add_new_word(new_words_id,new_word)
+
+            for i in range(len(parsed_document.chapters)):
+                chapter = parsed_document.chapters[i]
+                notion_query.append_chapter(page_id,chapter)
+                highlight_children = []
+                for highlight in parsed_document.highlights[i]:
+                    highlight_data_blocks = notion_query.get_highlight_blocks(highlight)
+                    highlight_children.extend(highlight_data_blocks)
+                notion_query.append_highlights(page_id,highlight_children)
         else:
             logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 

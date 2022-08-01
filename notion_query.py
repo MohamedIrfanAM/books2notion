@@ -390,3 +390,172 @@ def add_new_word(new_words_id,new_word):
     except:
         logger.error("Failed to add new word,response error")
         return None
+
+def append_chapter(page_id,chapter):
+    append_url = f"{block_url}{page_id}/children"
+    page_data = {
+        "children":[
+            {
+                "object":"block",
+                'type': 'heading_2',
+                'heading_2': {
+                  'rich_text': [
+                    {
+                      'type': 'text',
+                      'text': {
+                        'content': chapter["title"],
+                        'link': None
+                      },
+                      'annotations': {
+                        'bold': False,
+                        'italic': False,
+                        'strikethrough': False,
+                        'underline': True,
+                        'code': False,
+                        'color': 'default'
+                      },
+                      'plain_text': chapter["title"],
+                      'href': None
+                    }
+                  ],
+                  'color': 'default'
+                }
+            },
+            {
+                "object":"block",
+                'type': 'paragraph',
+                'paragraph': {
+                  'rich_text': [
+                    {
+                      'type': 'text',
+                      'text': {
+                        'content': f'{chapter["highlights"]} highlights and {chapter["notes"]} notes',
+                        'link': None
+                      },
+                      'annotations': {
+                        'bold': False,
+                        'italic': True,
+                        'strikethrough': False,
+                        'underline': False,
+                        'code': False,
+                        'color': 'default'
+                      },
+                      'plain_text': f'{chapter["highlights"]} highlights and {chapter["notes"]} notes',
+                      'href': None
+                    }
+                  ],
+                  'color': 'default'
+                }
+            },
+            {
+                "object":"block",
+                'type': 'paragraph',
+                'paragraph': {
+                  'rich_text': [
+
+                  ],
+                  'color': 'default'
+                }
+            }
+        ]
+    }
+
+    data = json.dumps(page_data)
+    try:
+        response = requests.patch(append_url,headers=headers,data=data)
+        logger.info(f"Successfully appended chapter {chapter['title']} - {response.status_code}")
+    except:
+        logger.error(f"Failed to append chapter {chapter['title']},response error")
+
+def get_highlight_blocks(highlight):
+    logger.info("Constructing highlight blocks")
+    highlight_block = {
+            "object":"block",
+            "type":"quote",
+            "quote":{
+                "rich_text": [
+                    {
+                        "type":"text",
+                        "text":{
+                            "content":f"{highlight['text']}\n\nPage: ",
+                            "link":None
+                        },
+                        "plain_text":f"{highlight['text']}\n\nPage: ",
+                        "href":None
+                    },
+                    {
+                        "type":"text",
+                        "text":{
+                            "content":f"{highlight['pageNo']}\n",
+                            "link": {
+                                "url": highlight["url"]
+                            }
+                        },
+                        "plain_text":f"{highlight['pageNo']}\n",
+                        "href":highlight["url"]
+                    },
+                    {
+                        "type":"text",
+                        "text":{
+                            "content":f"Date: {highlight['date']}",
+                            "link":None
+                        },
+                        "plain_text":f"Date: {highlight['date']}",
+                        "href":None
+                    }
+                ],
+                "color":highlight["color"]
+            }
+    }
+    spacer_block = {
+        "object":"block",
+        'type': 'paragraph',
+        'paragraph': {
+          'rich_text': [
+
+          ],
+          'color': 'default'
+        }
+    }
+    highlight_data_blocks = []
+    if highlight["note"] is not None:
+        note_block = {
+            "object":"block",
+            "type":"callout",
+            "callout":{
+                "rich_text":[
+                    {
+                        "type":"text",
+                        "text":{
+                            "content":highlight["note"],
+                            "link":None
+                        },
+                        "plain_text":highlight["note"],
+                        "href":None
+                    }
+                ],
+                "icon":{
+                    "type":"emoji",
+                    "emoji":"💡"
+                },
+                "color":f"{highlight['color']}_background"
+            }
+        }
+        highlight_data_blocks = [highlight_block,note_block,spacer_block]
+    else:
+        highlight_data_blocks = [highlight_block,spacer_block]
+    logger.info("Finished contructing highlight block")
+    return highlight_data_blocks
+
+def append_highlights(page_id,children):
+    append_url = f"{block_url}{page_id}/children"
+    page_data = {
+            "children":children
+    }
+    data = json.dumps(page_data)
+    try:
+        response = requests.patch(append_url,headers=headers,data=data)
+        logger.info(f"Successfully appended highlights - {response.status_code}")
+    except:
+        logger.error(f"Failed to append highlights")
+
