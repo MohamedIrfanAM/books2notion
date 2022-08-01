@@ -65,6 +65,9 @@ def main():
                 page_id = re.sub("-","",str(page_id))
                 new_words_id = notion_query.create_new_words_database(page_id)
                 new_words_id = re.sub("-","",str(new_words_id))
+
+            for new_word in parsed_document.new_words:
+                notion_query.add_new_word(new_words_id,new_word)
         else:
             logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 

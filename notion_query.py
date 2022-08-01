@@ -321,3 +321,72 @@ def get_new_words_id(page_id):
     else:
         logger.error("Couldn't find new_words_id")
 
+def add_new_word(new_words_id,new_word):
+    page_data = {
+        "parent": {
+            "database_id": new_words_id
+        },
+        "properties": {
+            "Word": {
+                "title":[
+                    {
+                        "text": {
+                            "content": new_word["text"]
+                        }
+                    }
+                ]
+            },
+            "Definition": {
+             'rich_text': [
+                {
+                 'type': 'text',
+                 'text': {
+                   'content': "",
+                   'link': None
+                 },
+                 'annotations': {
+                   'bold': False,
+                   'italic': True,
+                   'strikethrough': False,
+                   'underline': False,
+                   'code': False,
+                   'color': 'default'
+                 },
+                 'plain_text': '',
+                 'href': None
+                }
+                ]
+            },
+            "PageNo": {
+             'rich_text': [
+                {
+                 'type': 'text',
+                 'text': {
+                   'content': new_word["pageNo"],
+                   'link': {"url": new_word["url"] }
+                 },
+                 'annotations': {
+                   'bold': False,
+                   'italic': False,
+                   'strikethrough': False,
+                   'underline': True,
+                   'code': False,
+                   'color': 'default'
+                 },
+                 'plain_text': new_word["pageNo"],
+                 'href': new_word["url"]
+                }
+                ]
+
+            }
+        }
+    }
+    page_data = json.dumps(page_data)
+    try:
+        response = requests.post(page_url,headers=headers,data=page_data)
+        id = response.json()["id"]
+        logger.info(f"Successfully added new word - {response.status_code} - New_word_PageID = {id}")
+        return id
+    except:
+        logger.error("Failed to add new word,response error")
+        return None

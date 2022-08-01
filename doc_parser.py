@@ -40,7 +40,6 @@ class document:
                     }
                     self.chapters.append(chapter_dic)
                     self.highlights.append([])
-                    self.new_words.append([])
 
                     if len(self.chapters)-1:
                         self.chapters[len(self.chapters)-2]["highlights"] = chapter_highlights
@@ -58,7 +57,6 @@ class document:
                 date = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][2]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
                 pageNo = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][2]["content"][0]["paragraph"]["elements"][0]["textRun"]["content"]
                 url = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][2]["content"][0]["paragraph"]["elements"][0]["textRun"]["textStyle"]["link"]["url"]
-                
                 regex_find_date = re.compile(r'\w{3,9}\W\d{1,2},\W\d{4}')
                 if regex_find_date.search(note):
                     note = None
@@ -67,7 +65,7 @@ class document:
                     self.total_notes += 1
                     chapter_notes += 1
 
-                if color == 1:
+                if int(color) == 1:
                     color = "red"
                 elif color == 0.5764706:
                     color = "blue"
@@ -76,7 +74,7 @@ class document:
                 elif color == 0.99215686:
                     color = "yellow"
 
-                if highlight and highlight != "\n":
+                if highlight is not None and highlight != "\n":
                     highlight_data = {
                         "text":highlight,
                         "note":note,
@@ -86,7 +84,7 @@ class document:
                         "color":color
                     }
                     if color == "red":
-                        self.new_words[len(self.chapters)-1].append(highlight_data)
+                        self.new_words.append(highlight_data)
                         self.total_new_words += 1
                     else:
                         self.total_highlights += 1
