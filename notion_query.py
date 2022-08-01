@@ -316,3 +316,11 @@ def create_new_words_database(page_id):
     except:
         logger.error("Failed to create new words database,response error")
         return None
+def get_new_words_id(page_id):
+    blocks = get_blocks(page_id)
+    if blocks is not None:
+        logger.info(f"Found new_words_id - {blocks[2]}")
+        return blocks[2]["id"]
+    else:
+        logger.error("Couldn't find new_words_id")
+

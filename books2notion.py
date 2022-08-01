@@ -48,10 +48,14 @@ def main():
         last_sync_response = validate_time_diff(doc)
         if last_sync_response is not False:
             parsed_document = document(doc["docs_id"])
+            page_id = ""
+            new_words_id = ""
             if last_sync_response is not None:
                 page_id = last_sync_response
                 page_id = re.sub("-","",str(page_id))
                 notion_query.clear_page_content(page_id)
+                new_words_id = notion_query.get_new_words_id(page_id)
+                new_words_id = re.sub("-","",str(new_words_id))
             else:
                 metadata = book(parsed_document.title)
                 urls = cover.get_url(metadata.thumbnail)
@@ -60,6 +64,7 @@ def main():
                 page_id = str(notion_query.create_page(urls,properties,children))
                 page_id = re.sub("-","",str(page_id))
                 new_words_id = notion_query.create_new_words_database(page_id)
+                new_words_id = re.sub("-","",str(new_words_id))
         else:
             logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 
