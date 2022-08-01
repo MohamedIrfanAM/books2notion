@@ -294,10 +294,7 @@ def create_new_words_database(page_id):
               "rich_text": {}
             },
             "PageNo": {
-              "number": {}
-            },
-            "Link":{
-                "url":{}
+              "rich_text": {}
             }
         },
         "icon": {
@@ -319,7 +316,7 @@ def create_new_words_database(page_id):
 def get_new_words_id(page_id):
     blocks = get_blocks(page_id)
     if blocks is not None:
-        logger.info(f"Found new_words_id - {blocks[2]}")
+        logger.info(f"Found new_words_id - {blocks[2]['id']}")
         return blocks[2]["id"]
     else:
         logger.error("Couldn't find new_words_id")
