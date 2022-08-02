@@ -568,3 +568,26 @@ def update_properties(page_id,parsed_document,time):
     except:
         logger.error(f"Failed to update properties,response error")
 
+def new_word_exists(new_word_id,new_word):
+    check_url = f"https://api.notion.com/v1/databases/{new_word_id}/query"
+    filter_data = {
+        "filter": {
+            "property": "Word",
+            "rich_text": {
+                "equals": new_word['text']
+            }
+        }
+    }
+    filter_data = json.dumps(filter_data)
+    try:
+        response = requests.post(check_url,headers=headers,data=filter_data)
+        if len(response.json()["results"]) == 0:
+            logger.info(f"{new_word} doesn't exist in the database")
+            return False
+        else:
+            logger.info(f"{new_word} exists in the database")
+            return True
+    except:
+        logger.error("Failed to check if new_word exists,response error")
+        return None
+
