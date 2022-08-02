@@ -17,7 +17,10 @@ class book:
                 self.url = book["accessInfo"]["webReaderLink"][0:-39]
                 self.authors = book["volumeInfo"]["authors"]
                 self.publisher = book["volumeInfo"]["publisher"]
-        query = f"intitle:{self.name} inauthor:{self.authors[0]} inpublisher:{self.publisher}"
+                break
+        query = f"intitle:{self.name} inpublisher:{self.publisher}"
+        for author in self.authors:
+            query += f" inauthor:{author}"
         book_query_response = gbooks.volumes().list(q = query,orderBy = "relevance",langRestrict ="en-GB,en").execute()["items"][0]["volumeInfo"]
         self.thumbnail_small = book_query_response["imageLinks"]["thumbnail"]
         self.about = book_query_response["description"]
