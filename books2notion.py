@@ -3,6 +3,7 @@ import notion_query
 from doc_parser import document
 import cover
 from metadata_fetcher import book
+import dictionary
 from datetime import datetime,timedelta
 import logging
 import sys
@@ -67,7 +68,8 @@ def main():
                 new_words_id = re.sub("-","",str(new_words_id))
 
             for new_word in parsed_document.new_words:
-                notion_query.add_new_word(new_words_id,new_word)
+                definition = dictionary.get_definitions(new_word['text'])
+                notion_query.add_new_word(new_words_id,new_word,definition)
 
             for i in range(len(parsed_document.chapters)):
                 chapter = parsed_document.chapters[i]
