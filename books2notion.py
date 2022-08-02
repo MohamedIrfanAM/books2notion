@@ -77,6 +77,11 @@ def main():
                     highlight_data_blocks = notion_query.get_highlight_blocks(highlight)
                     highlight_children.extend(highlight_data_blocks)
                 notion_query.append_highlights(page_id,highlight_children)
+
+            utc_now = datetime.utcnow()
+            ist_now = str(utc_now + timedelta(hours=5,minutes=30))
+            ist_now = (re.sub(' ','T',ist_now[:-3]))+"+05:30"
+            notion_query.update_properties(page_id,parsed_document,ist_now)
         else:
             logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 

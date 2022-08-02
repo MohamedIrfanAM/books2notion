@@ -559,3 +559,30 @@ def append_highlights(page_id,children):
     except:
         logger.error(f"Failed to append highlights")
 
+def update_properties(page_id,parsed_document,time):
+    update_url = f"{page_url}/{page_id}"
+    page_data = {
+        "properties" : {
+            "Highlight Count": {
+                "number": int(parsed_document.total_highlights)
+            },
+            "New Words Count": {
+                "number": int(parsed_document.total_new_words)
+            },
+            "Note Count": {
+                "number": int(parsed_document.total_notes)
+            },
+            "last_sync": {
+              "date": {
+                "start": time
+              }
+            },
+        }
+    }
+    data = json.dumps(page_data)
+    try:
+        response = requests.patch(update_url,headers=headers,data=data)
+        logger.info(f"Successfully updated page properties - {response.status_code}")
+    except:
+        logger.error(f"Failed to update properties,response error")
+
