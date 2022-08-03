@@ -4,6 +4,7 @@ import shutil # save img locally
 import json
 import re
 import base64
+import os
 import concurrent.futures
 from io import BytesIO  
 from requests.adapters import HTTPAdapter
@@ -59,6 +60,9 @@ def get_url(url):
     #ID and file_name
     id = re.search(r"(https?:\/\/books.google.com\/books\/(publisher\/)?content\?id=)(.{12})(.*)",url).group(3)
     file_name = f"covers/{id}.png"
+    #Create covers directory if doesn't exist
+    if not os.path.isdir('covers'):
+        os.mkdir('covers')
     #Downlaod thumbnail
     logger.info("Starting to Download image")
     downlaod(url,file_name)
@@ -98,3 +102,4 @@ def get_url(url):
         }
         return urls
 
+get_url("https://books.google.com/books/publisher/content?id=m-ZvDwAAQBAJ&printsec=frontcover&img=1&zoom=1&imgtk=AFLRE70eBeDtwoN3pq2pdtUAP1K-Ti2PuYHd2exrkGkgwxSu60ydrApgVjCwlTCR_IQoZkVSiREOov9PZPtpkse0CM_S_up6-b32Vmfe89io1MxrkuLe364&source=gbs_api")
