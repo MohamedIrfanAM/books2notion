@@ -1,5 +1,4 @@
 import google_api
-import re
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,24 +17,37 @@ class book:
                 self.authors = book["volumeInfo"]["authors"]
                 self.publisher = book["volumeInfo"]["publisher"]
                 break
-        query = f"intitle:{self.name} inpublisher:{self.publisher}"
+
+        query = f"intitle:{self.name}"
         for author in self.authors:
             query += f" inauthor:{author}"
-        book_query_response = gbooks.volumes().list(q = query,orderBy = "relevance",langRestrict ="en-GB,en").execute()["items"][0]["volumeInfo"]
-        self.thumbnail_small = book_query_response["imageLinks"]["thumbnail"]
-        self.about = book_query_response["description"]
-        self.categories = book_query_response["categories"]
+        query += f" inpublisher:{self.publisher}"
+
+        books_query = gbooks.volumes().list(q = query,orderBy = "relevance",langRestrict ="en-GB,en").execute()["items"][0]
+        book_query_response = books_query["volumeInfo"]
+        self.thumbnail = book_query_response["imageLinks"]["thumbnail"]
         self.isbn = book_query_response["industryIdentifiers"][0]["identifier"]
-        self.page_count = book_query_response["pageCount"]
-        self.publishedDate = book_query_response["publishedDate"]
+        self.id = books_query['id']
 
-        regex_result = re.search(r"(https?:\/\/books.google.com\/books\/content\?id=)(.{12})(.*)",self.thumbnail_small)
-        if regex_result is not None:
-            self.id = regex_result.group(2)
+        try:
+            self.isbn = int(self.isbn)
+        except:
+            self.isbn = 0
 
-        book_get_response = gbooks.volumes().get(volumeId = self.id).execute()["volumeInfo"]
-        if len(book_get_response["imageLinks"]) == 2:
-            self.thumbnail = list(book_get_response["imageLinks"].values())[1]
-        elif len(book_get_response["imageLinks"]) > 2:
-            self.thumbnail = list(book_get_response["imageLinks"].values())[2]
-        logger.info("Finished fetching metadata")
+        if "description" in book_query_response:
+            self.about = book_query_response["description"]
+        else:
+            self.about = ""
+        if "categories" in book_query_response:
+            self.categories = book_query_response["categories"]
+        else:
+            self.categories = []
+        if "pageCount" in book_query_response:
+            self.page_count = book_query_response["pageCount"]
+        else:
+            self.page_count = 0
+        if "publishedDate" in book_query_response:
+            self.publishedDate = book_query_response["publishedDate"]
+        else:
+            self.publishedDate = ""
+
