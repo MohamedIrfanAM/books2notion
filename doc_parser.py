@@ -29,7 +29,7 @@ class document:
         chapter_highlights = 0
         chapter_notes = 0
 
-        for i in range(11,len(self.json["body"]["content"])):
+        for i in range(9,len(self.json["body"]["content"])):
             try:
                 chapter = self.json["body"]["content"][i]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
                 if chapter and chapter != "\n":
