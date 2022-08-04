@@ -223,7 +223,7 @@ def get_header_children(metadata):
                       "rich_text": [{
                           "type":"text",
                           "text": {
-                              "content":metadata.about,
+                              "content":metadata.about[:min(2000,len(metadata.about))],
                               "link":None
                               }
                           }]
