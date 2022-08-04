@@ -102,4 +102,3 @@ def get_url(url):
         }
         return urls
 
-get_url("https://books.google.com/books/publisher/content?id=m-ZvDwAAQBAJ&printsec=frontcover&img=1&zoom=1&imgtk=AFLRE70eBeDtwoN3pq2pdtUAP1K-Ti2PuYHd2exrkGkgwxSu60ydrApgVjCwlTCR_IQoZkVSiREOov9PZPtpkse0CM_S_up6-b32Vmfe89io1MxrkuLe364&source=gbs_api")
