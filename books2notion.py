@@ -8,6 +8,7 @@ from datetime import datetime,timedelta
 import logging
 import sys
 import re
+import argparse
 
 logging.basicConfig(
         level=logging.DEBUG, 
@@ -19,12 +20,16 @@ logging.basicConfig(
     ])
 logger = logging.getLogger()
 
+
+parser = argparse.ArgumentParser(description='Sync Google Books Highlights to Notion.')
+parser.add_argument('-m', '--mode', choices=["sync","append"],default='append', help="Select mode of syncing")
+args = parser.parse_args()
+
 def validate_time_diff(doc):
     notion_last_sync_info = notion_query.get_last_sync(doc["docs_id"])
     if notion_last_sync_info is not None:
         logger.info(f"Found existing notion page having docs_id - {doc['docs_id']}")
         notion_last_sync_time = notion_last_sync_info["last_sync_time"]
-        notion_last_sync_page_id = notion_last_sync_info["page_id"]
         notion_time_string = notion_last_sync_time[:-10]
         doc_time_string = doc["modified_time"][:-5]
         notion_time = datetime.strptime(notion_time_string,"%Y-%m-%dT%H:%M:%S")
@@ -34,7 +39,15 @@ def validate_time_diff(doc):
         time_diff = (doc_time - notion_time).total_seconds()/60
         if time_diff > 5:
             logger.info("Time differance is greater than 5 minutes, intitiializing syncing process")
-            return notion_last_sync_page_id
+            return_info = {
+                    "page_id":notion_last_sync_info["page_id"],
+                    "progress_no":notion_last_sync_info["progress_no"],
+                    "parsed_chapters":notion_last_sync_info["parsed_chapters"],
+                    "parsed_highlights":notion_last_sync_info["parsed_highlights"],
+                    "parsed_notes":notion_last_sync_info["parsed_notes"],
+                    "parsed_new_words":notion_last_sync_info["parsed_new_words"],
+            }
+            return return_info
         else:
             logger.info("Time difference is less than 5 minutes")
             return False
@@ -48,16 +61,26 @@ def main():
     for doc in docs:
         last_sync_response = validate_time_diff(doc)
         if last_sync_response is not False:
-            parsed_document = document(doc["docs_id"])
+            parsed_document = None
             page_id = ""
             new_words_id = ""
             if last_sync_response is not None:
-                page_id = last_sync_response
+                page_id = last_sync_response["page_id"]
                 page_id = re.sub("-","",str(page_id))
-                notion_query.clear_page_content(page_id)
+                if args.mode == 'sync':
+                    notion_query.clear_page_content(page_id)
+                    parsed_document = document(doc["docs_id"])
+                else:
+                    progress_no = last_sync_response["progress_no"]
+                    parsed_chapters = last_sync_response["parsed_chapters"]
+                    parsed_highlights = last_sync_response["parsed_highlights"]
+                    parsed_notes = last_sync_response["parsed_notes"]
+                    parsed_new_words = last_sync_response["parsed_new_words"]
+                    parsed_document = document(doc["docs_id"],progress_no,parsed_chapters,parsed_highlights,parsed_notes,parsed_new_words)
                 new_words_id = notion_query.get_new_words_id(page_id)
                 new_words_id = re.sub("-","",str(new_words_id))
             else:
+                parsed_document = document(doc["docs_id"])
                 metadata = book(parsed_document.title)
                 urls = cover.get_url(metadata.thumbnail)
                 properties = notion_query.get_page_properties(parsed_document,metadata,doc["docs_id"])
@@ -68,13 +91,18 @@ def main():
                 new_words_id = re.sub("-","",str(new_words_id))
 
             for new_word in parsed_document.new_words:
-                if not notion_query.new_word_exists(new_words_id,new_word):
+                if args.mode == 'sync':
+                    if not notion_query.new_word_exists(new_words_id,new_word):
+                        definition = dictionary.get_definitions(new_word['text'])
+                        notion_query.add_new_word(new_words_id,new_word,definition)
+                elif args.mode == 'append':
                     definition = dictionary.get_definitions(new_word['text'])
                     notion_query.add_new_word(new_words_id,new_word,definition)
 
             for i in range(len(parsed_document.chapters)):
                 chapter = parsed_document.chapters[i]
-                notion_query.append_chapter(page_id,chapter)
+                if len(chapter["title"]) > 0:
+                    notion_query.append_chapter(page_id,chapter)
                 highlight_children = []
                 for highlight in parsed_document.highlights[i]:
                     highlight_data_blocks = notion_query.get_highlight_blocks(highlight)
