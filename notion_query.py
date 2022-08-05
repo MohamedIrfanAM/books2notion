@@ -39,10 +39,20 @@ def get_last_sync(docs_id):
         response = requests.post(query_url,headers=headers,data=filter_data)
         last_sync_time = response.json()["results"][0]["properties"]["last_sync"]["date"]["start"]
         page_id = response.json()["results"][0]["id"]
+        progress_no = response.json()["results"][0]["properties"]["parse_progress"]["number"]
+        parsed_chapters = response.json()["results"][0]["properties"]["Chapter Count"]["number"]
+        parsed_highlights = response.json()["results"][0]["properties"]["Highlight Count"]["number"]
+        parsed_notes = response.json()["results"][0]["properties"]["Note Count"]["number"]
+        parsed_new_words = response.json()["results"][0]["properties"]["New Words Count"]["number"]
         last_sync_info = {
                 "last_sync_time":last_sync_time,
-                "page_id":page_id
-                }
+                "page_id":page_id,
+                "progress_no": progress_no,
+                "parsed_chapters": parsed_chapters,
+                "parsed_highlights":parsed_highlights,
+                "parsed_notes": parsed_notes,
+                "parsed_new_words":parsed_new_words
+        }
         if response.status_code == 200 and last_sync_time is not None:
             logger.info(f"Found last_sync time and PageID = {page_id}")
             return last_sync_info
@@ -553,6 +563,12 @@ def update_properties(page_id,parsed_document,time):
             },
             "Note Count": {
                 "number": int(parsed_document.total_notes)
+            },
+            "Chapter Count": {
+                "number": int(parsed_document.total_chapters)
+            },
+            "parse_progress": {
+                "number": int(parsed_document.progress_no)
             },
             "last_sync": {
               "date": {
