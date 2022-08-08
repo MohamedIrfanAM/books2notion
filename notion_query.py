@@ -282,6 +282,52 @@ class notion_client:
                     await self.client.delete(delete_url, headers=self.headers)
             self.logger.info("finished deleting all content blocks")
 
+    async def get_new_words_pages(self,new_word_id):
+        new_word_query_url = f"https://api.notion.com/v1/databases/{new_word_id}/query"
+        self.logger.info(f"getting all new word pages in database - {new_word_id}")
+        filter_data = {
+            "filter": {
+                "property": "Word",
+                "rich_text": {
+                    "is_not_empty": True
+                }
+            },
+            "page_size":100
+        }
+        filter_data = json.dumps(filter_data)
+        try:
+            response = await self.client.post(new_word_query_url,headers=self.headers,data=filter_data)
+            response_data = response.json()
+            page_ids = [result["id"] for result in response_data["results"]]
+            while response_data["has_more"]:
+                filter_data = {
+                    "filter": {
+                        "property": "",
+                        "rich_text": {
+                            "is_not_empty": True
+                        }
+                    },
+                    "page_size":100,
+                    "start_cursor":response_data["next_cursor"]
+                }
+                response = await self.client.post(new_word_query_url,headers=self.headers,data=filter_data,)
+                response_data = response.json()
+                page_ids.extend([result["id"] for result in response_data["results"]])
+
+            self.logger.error("Returning page ids for all new words")
+            return page_ids
+        except:
+            self.logger.error("failed to find new_words pages")
+            return None
+
+    async def delete_new_words(self,new_word_id):
+        page_ids = await self.get_new_words_pages(new_word_id)
+        self.logger.error(f"starting to delete {len(page_ids)} new_words")
+        for page_id in page_ids:
+            delete_url = f"{self.block_url}{page_id}"
+            await self.client.delete(delete_url, headers=self.headers)
+        self.logger.info("finished deleting all new_words")
+
     async def create_new_words_database(self,page_id):
         data = {
             "parent": {

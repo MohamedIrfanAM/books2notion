@@ -22,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 parser = argparse.ArgumentParser(description='Sync Google Books Highlights to Notion.')
-parser.add_argument('-m', '--mode', choices=["sync","append"],default='append', help="Select mode of syncing")
+parser.add_argument('-m', '--mode', choices=["sync","append","sync-full"],default='append', help="Select mode of syncing")
 args = parser.parse_args()
 
 dictionary = dictionary_class()
@@ -70,9 +70,13 @@ async def main():
             if last_sync_response is not None:
                 page_id = last_sync_response["page_id"]
                 page_id = re.sub("-","",str(page_id))
-                if args.mode == 'sync':
+                new_words_id = await notion_query.get_new_words_id(page_id)
+                new_words_id = re.sub("-","",str(new_words_id))
+                if args.mode == 'sync' or args.mode == 'sync-full':
                     await notion_query.clear_page_content(page_id)
                     parsed_document = document(doc["docs_id"])
+                    if args.mode == 'sync-full':
+                        await notion_query.delete_new_words(new_words_id)
                 else:
                     progress_no = last_sync_response["progress_no"]
                     parsed_chapters = last_sync_response["parsed_chapters"]
@@ -80,8 +84,6 @@ async def main():
                     parsed_notes = last_sync_response["parsed_notes"]
                     parsed_new_words = last_sync_response["parsed_new_words"]
                     parsed_document = document(doc["docs_id"],progress_no,parsed_chapters,parsed_highlights,parsed_notes,parsed_new_words)
-                new_words_id = await notion_query.get_new_words_id(page_id)
-                new_words_id = re.sub("-","",str(new_words_id))
             else:
                 parsed_document = document(doc["docs_id"])
                 metadata = book(parsed_document.title)
@@ -93,13 +95,14 @@ async def main():
                 new_words_id = notion_query.create_new_words_database(page_id)
                 new_words_id = re.sub("-","",str(new_words_id))
 
+            logger.info(f"Syncing {parsed_document.title}...")
             for new_word in parsed_document.new_words:
                     if args.mode == 'sync':
                         if not await notion_query.new_word_exists(new_words_id,new_word):
-                                definition = dictionary.get_definitions(new_word['text'])
+                                definition = await dictionary.get_definitions(new_word['text'])
                                 await notion_query.add_new_word(new_words_id,new_word,definition)
-                    elif args.mode == 'append':
-                        definition = dictionary.get_definitions(new_word['text'])
+                    elif args.mode == 'append' or args.mode == 'sync-full':
+                        definition = await dictionary.get_definitions(new_word['text'])
                         await notion_query.add_new_word(new_words_id,new_word,definition)
 
             for i in range(len(parsed_document.chapters)):
@@ -116,6 +119,7 @@ async def main():
             ist_now = str(utc_now + timedelta(hours=5,minutes=30))
             ist_now = (re.sub(' ','T',ist_now[:-3]))+"+05:30"
             await notion_query.update_properties(page_id,parsed_document,ist_now)
+            logger.info(f"Finished syncing {parsed_document.title} successfully")
         else:
             logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 
