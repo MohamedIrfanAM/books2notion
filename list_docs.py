@@ -1,16 +1,14 @@
 import google_api
-import json
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
 def ids():
     drive = google_api.connect("drive","v3")
 
-    secret_file = open('secrets.json') 
-    secret_data = json.load(secret_file) 
 
-    folderID = secret_data["folder_id"]
+    folderID = os.getenv('DRIVE_FOLDER_ID')
     query = f"parents = '{folderID}'"
     fields= "files(id,modifiedTime)"
 

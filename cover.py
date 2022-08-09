@@ -1,7 +1,6 @@
 from PIL import Image
 import requests # request img from web
 import shutil # save img locally
-import json
 import re
 import base64
 import os
@@ -36,11 +35,8 @@ def downlaod(url,file_name):
         logger.error("Failed to Download image")
 
 def upload(img_str):
-    secret_file = open('secrets.json') 
-    secret_data = json.load(secret_file) 
-    image_host_key = secret_data["image_host_key"]
+    image_host_key = os.getenv('IMAGE_HOST_KEY')
     image_host_url = "https://freeimage.host/api/1/upload"
-    secret_file.close() 
 
     data = {
         "key":image_host_key,

@@ -1,6 +1,7 @@
 import json
 import logging
 import httpx
+import os
 
 class notion_client:
 
@@ -8,13 +9,9 @@ class notion_client:
         self.client = httpx.AsyncClient()
 
     logger = logging.getLogger(__name__)
-    secret_file = open('secrets.json')
-    secret_data = json.load(secret_file)
 
-    key = secret_data['key']
-    database_id = secret_data['database_id']
-
-    secret_file.close() 
+    key = os.getenv('NOTION_KEY')
+    database_id = os.getenv('NOTION_DATABASE_ID')
 
     query_url = f"https://api.notion.com/v1/databases/{database_id}/query"
     page_url = "https://api.notion.com/v1/pages" 
