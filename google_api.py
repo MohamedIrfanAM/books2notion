@@ -7,9 +7,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import logging
 import json
-from dotenv import load_dotenv
 
-load_dotenv()
 logger = logging.getLogger(__name__)
 
 def connect(api,version):
