@@ -1,12 +1,11 @@
-import httpx
+import requests
 
 class dictionary_class:
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=None)
-
+        pass
     async def get_definitions(self,word):
         url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
-        response = await self.client.get(url)
+        response = requests.get(url)
         definitions_rich_text = [] 
         if response.json() is not None and response.status_code == 200:
             meanings = response.json()[0]["meanings"]

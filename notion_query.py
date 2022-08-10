@@ -1,29 +1,28 @@
 import json
 import logging
-import httpx
 import os
+import requests
 
 class notion_client:
 
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=None)
 
-    logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
 
-    key = os.getenv('NOTION_KEY')
-    database_id = os.getenv('NOTION_DATABASE_ID')
+        self.key = os.getenv('NOTION_KEY')
+        self.database_id = os.getenv('NOTION_DATABASE_ID')
 
-    query_url = f"https://api.notion.com/v1/databases/{database_id}/query"
-    page_url = "https://api.notion.com/v1/pages" 
-    block_url = "https://api.notion.com/v1/blocks/"
-    database_url = "https://api.notion.com/v1/databases"
+        self.query_url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
+        self.page_url = "https://api.notion.com/v1/pages" 
+        self.block_url = "https://api.notion.com/v1/blocks/"
+        self.database_url = "https://api.notion.com/v1/databases"
 
-    headers = {
-        'Authorization': f'Bearer {key}',
-        "Notion-Version": "2022-02-22",
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
+        self.headers = {
+            'Authorization': f'Bearer {self.key}',
+            "Notion-Version": "2022-02-22",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
 
     async def get_last_sync(self,docs_id):
         self.logger.info(f"getting last_sync time for docs_id - {docs_id}")
@@ -37,7 +36,7 @@ class notion_client:
         }
         filter_data = json.dumps(filter_data)
         try:
-            response = await self.client.post(self.query_url,headers=self.headers,data=filter_data)
+            response = requests.post(self.query_url,headers=self.headers,data=filter_data)
             last_sync_time = response.json()["results"][0]["properties"]["last_sync"]["date"]["start"]
             page_id = response.json()["results"][0]["id"]
             progress_no = response.json()["results"][0]["properties"]["parse_progress"]["number"]
@@ -83,7 +82,7 @@ class notion_client:
         }
         page_data = json.dumps(page_data)
         try:
-            response = await self.client.post(self.page_url,headers=self.headers,data=page_data)
+            response = requests.post(self.page_url,headers=self.headers,data=page_data)
             id = response.json()["id"]
             self.logger.info(f"Successfully createed page - {response.status_code} - PageID = {id}")
             return id
@@ -251,7 +250,7 @@ class notion_client:
         params = { "page_size" : 100}
         blocks = []
         try:
-            response = await self.client.get(retrieve_url,headers=self.headers,params=params)
+            response = requests.get(retrieve_url,headers=self.headers,params=params)
             response_data = response.json()
             self.logger.info(f"status_code from get_blocks - {response.status_code}")
             blocks.extend(response_data["results"])
@@ -260,7 +259,7 @@ class notion_client:
                         "page_size":100,
                         "start_cursor":response_data["next_cursor"]
                 }
-                response = await self.client.get(retrieve_url,headers=self.headers,params=params)
+                response = requests.get(retrieve_url,headers=self.headers,params=params)
                 response_data = response.json()
                 blocks.extend(response_data["results"])
             return blocks
@@ -272,11 +271,12 @@ class notion_client:
         headers_count = 3
         if blocks is not None:
             blocks = blocks[headers_count:]
+            clear_page_client = requests.Session()
             self.logger.info(f"Starting to delete {len(blocks)-headers_count} blocks")
             for block in blocks:
                     block_id = block["id"]
                     delete_url = f"{self.block_url}{block_id}"
-                    await self.client.delete(delete_url, headers=self.headers)
+                    clear_page_client.delete(delete_url, headers=self.headers)
             self.logger.info("finished deleting all content blocks")
 
     async def get_new_words_pages(self,new_word_id):
@@ -293,7 +293,7 @@ class notion_client:
         }
         filter_data = json.dumps(filter_data)
         try:
-            response = await self.client.post(new_word_query_url,headers=self.headers,data=filter_data)
+            response = requests.post(new_word_query_url,headers=self.headers,data=filter_data)
             response_data = response.json()
             page_ids = [result["id"] for result in response_data["results"]]
             while response_data["has_more"]:
@@ -307,7 +307,7 @@ class notion_client:
                     "page_size":100,
                     "start_cursor":response_data["next_cursor"]
                 }
-                response = await self.client.post(new_word_query_url,headers=self.headers,data=filter_data,)
+                response = requests.post(new_word_query_url,headers=self.headers,data=filter_data,)
                 response_data = response.json()
                 page_ids.extend([result["id"] for result in response_data["results"]])
 
@@ -319,10 +319,11 @@ class notion_client:
 
     async def delete_new_words(self,new_word_id):
         page_ids = await self.get_new_words_pages(new_word_id)
+        delete_new_words_client = requests.Session()
         self.logger.error(f"starting to delete {len(page_ids)} new_words")
         for page_id in page_ids:
             delete_url = f"{self.block_url}{page_id}"
-            await self.client.delete(delete_url, headers=self.headers)
+            delete_new_words_client.delete(delete_url, headers=self.headers)
         self.logger.info("finished deleting all new_words")
 
     async def create_new_words_database(self,page_id):
@@ -419,7 +420,7 @@ class notion_client:
         }
         page_data = json.dumps(page_data)
         try:
-            response = await self.client.post(self.page_url,headers=self.headers,data=page_data)
+            response = requests.post(self.page_url,headers=self.headers,data=page_data)
             id = response.json()["id"]
             self.logger.info(f"Successfully added new word - {response.status_code} - New_word_PageID = {id}")
             return id
@@ -498,7 +499,7 @@ class notion_client:
 
         data = json.dumps(page_data)
         try:
-            response = await self.client.patch(append_url,headers=self.headers,data=data)
+            response = requests.patch(append_url,headers=self.headers,data=data)
             self.logger.info(f"Successfully appended chapter {chapter['title']} - {response.status_code}")
         except:
             self.logger.error(f"Failed to append chapter {chapter['title']},response error")
@@ -590,7 +591,7 @@ class notion_client:
         }
         data = json.dumps(page_data)
         try:
-            response = await self.client.patch(append_url,headers=self.headers,data=data)
+            response = requests.patch(append_url,headers=self.headers,data=data)
             self.logger.info(f"Successfully appended highlights - {response.status_code}")
         except:
             self.logger.error(f"Failed to append highlights")
@@ -623,7 +624,7 @@ class notion_client:
         }
         data = json.dumps(page_data)
         try:
-            response = await self.client.patch(update_url,headers=self.headers,data=data)
+            response = requests.patch(update_url,headers=self.headers,data=data)
             self.logger.info(f"Successfully updated page properties - {response.status_code}")
         except:
             self.logger.error(f"Failed to update properties,response error")
@@ -640,7 +641,7 @@ class notion_client:
         }
         filter_data = json.dumps(filter_data)
         try:
-            response = await self.client.post(check_url,headers=self.headers,data=filter_data)
+            response = requests.post(check_url,headers=self.headers,data=filter_data)
             if len(response.json()["results"]) == 0:
                 self.logger.info(f"{new_word} doesn't exist in the database")
                 return False
