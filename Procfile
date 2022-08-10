@@ -1,1 +1,1 @@
-worker: python books2notion.py
+worker: python schedule_sync.py

@@ -6,7 +6,7 @@ import os
 class notion_client:
 
     def __init__(self):
-        self.client = httpx.AsyncClient()
+        self.client = httpx.AsyncClient(timeout=None)
 
     logger = logging.getLogger(__name__)
 

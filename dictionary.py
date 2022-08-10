@@ -2,7 +2,7 @@ import httpx
 
 class dictionary_class:
     def __init__(self):
-        self.client = httpx.AsyncClient()
+        self.client = httpx.AsyncClient(timeout=None)
 
     async def get_definitions(self,word):
         url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"

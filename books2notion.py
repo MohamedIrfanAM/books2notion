@@ -8,7 +8,6 @@ from datetime import datetime,timedelta
 import logging
 import sys
 import re
-import argparse
 import asyncio
 
 logging.basicConfig(
@@ -20,10 +19,6 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout),
     ])
 logger = logging.getLogger()
-
-parser = argparse.ArgumentParser(description='Sync Google Books Highlights to Notion.')
-parser.add_argument('-m', '--mode', choices=["sync","append","sync-full"],default='append', help="Select mode of syncing")
-args = parser.parse_args()
 
 dictionary = dictionary_class()
 notion_query = notion_client()
@@ -59,7 +54,7 @@ async def validate_time_diff(doc):
         return None
 
 
-async def main():
+async def sync(mode):
     docs = list_docs.ids()
     for doc in docs:
         last_sync_response = await validate_time_diff(doc)
@@ -72,10 +67,10 @@ async def main():
                 page_id = re.sub("-","",str(page_id))
                 new_words_id = await notion_query.get_new_words_id(page_id)
                 new_words_id = re.sub("-","",str(new_words_id))
-                if args.mode == 'sync' or args.mode == 'sync-full':
+                if mode == 'sync' or mode == 'sync-full':
                     await notion_query.clear_page_content(page_id)
                     parsed_document = document(doc["docs_id"])
-                    if args.mode == 'sync-full':
+                    if mode == 'sync-full':
                         await notion_query.delete_new_words(new_words_id)
                 else:
                     progress_no = last_sync_response["progress_no"]
@@ -97,11 +92,11 @@ async def main():
 
             logger.info(f"Syncing {parsed_document.title}...")
             for new_word in parsed_document.new_words:
-                    if args.mode == 'sync':
+                    if mode == 'sync':
                         if not await notion_query.new_word_exists(new_words_id,new_word):
                                 definition = await dictionary.get_definitions(new_word['text'])
                                 await notion_query.add_new_word(new_words_id,new_word,definition)
-                    elif args.mode == 'append' or args.mode == 'sync-full':
+                    elif mode == 'append' or mode == 'sync-full':
                         definition = await dictionary.get_definitions(new_word['text'])
                         await notion_query.add_new_word(new_words_id,new_word,definition)
 
@@ -123,6 +118,5 @@ async def main():
         else:
             logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 
-
-if __name__ == "__main__":
-    asyncio.run(main())
+def main(mode="append"):
+    asyncio.run(sync(mode))

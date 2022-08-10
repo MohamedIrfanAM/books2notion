@@ -8,3 +8,4 @@ googleapis-common-protos==1.56.4
 httpx==0.23.0
 Pillow==9.2.0
 urllib3==1.26.9
+schedule==1.1.0
