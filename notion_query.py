@@ -2,6 +2,8 @@ import json
 import logging
 import os
 import requests
+from datetime import datetime,timedelta
+import re
 
 class notion_client:
 
@@ -23,7 +25,6 @@ class notion_client:
             "Accept": "application/json",
             "Content-Type": "application/json",
         }
-
     async def get_last_sync(self,docs_id):
         self.logger.info(f"getting last_sync time for docs_id - {docs_id}")
         filter_data = {
@@ -601,7 +602,10 @@ class notion_client:
         except:
             self.logger.error(f"Failed to append highlights")
 
-    async def update_properties(self,page_id,parsed_document,time):
+    async def update_properties(self,page_id,parsed_document):
+        utc_now = datetime.utcnow()
+        ist_now = str(utc_now + timedelta(hours=5,minutes=30))
+        time = (re.sub(' ','T',ist_now[:-3]))+"+05:30"
         update_url = f"{self.page_url}/{page_id}"
         page_data = {
             "properties" : {
