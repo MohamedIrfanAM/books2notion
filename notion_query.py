@@ -44,6 +44,7 @@ class notion_client:
             parsed_highlights = response.json()["results"][0]["properties"]["Highlight Count"]["number"]
             parsed_notes = response.json()["results"][0]["properties"]["Note Count"]["number"]
             parsed_new_words = response.json()["results"][0]["properties"]["New Words Count"]["number"]
+            full_sync_bool = response.json()["results"][0]["properties"]["Full_Sync"]["checkbox"]
             last_sync_info = {
                     "last_sync_time":last_sync_time,
                     "page_id":page_id,
@@ -51,7 +52,8 @@ class notion_client:
                     "parsed_chapters": parsed_chapters,
                     "parsed_highlights":parsed_highlights,
                     "parsed_notes": parsed_notes,
-                    "parsed_new_words":parsed_new_words
+                    "parsed_new_words":parsed_new_words,
+                    "full_sync_bool":full_sync_bool
             }
             if response.status_code == 200 and last_sync_time is not None:
                 self.logger.info(f"Found last_sync time and PageID = {page_id}")
@@ -320,11 +322,14 @@ class notion_client:
     async def delete_new_words(self,new_word_id):
         page_ids = await self.get_new_words_pages(new_word_id)
         delete_new_words_client = requests.Session()
-        self.logger.error(f"starting to delete {len(page_ids)} new_words")
-        for page_id in page_ids:
-            delete_url = f"{self.block_url}{page_id}"
-            delete_new_words_client.delete(delete_url, headers=self.headers)
-        self.logger.info("finished deleting all new_words")
+        if page_ids is not None:
+            self.logger.error(f"starting to delete {len(page_ids)} new_words")
+            for page_id in page_ids:
+                delete_url = f"{self.block_url}{page_id}"
+                delete_new_words_client.delete(delete_url, headers=self.headers)
+            self.logger.info("finished deleting all new_words")
+        else:
+            self.logger.info("No new words to delete")
 
     async def create_new_words_database(self,page_id):
         data = {
@@ -361,7 +366,7 @@ class notion_client:
         data = json.dumps(data)
 
         try:
-            response = await self.client.post(self.database_url,headers=self.headers,data=data)
+            response = requests.post(self.database_url,headers=self.headers,data=data)
             id = response.json()["id"]
             self.logger.info(f"Successfully createed new words database - {response.status_code} - DatabaseID = {id}")
             return id
@@ -620,6 +625,9 @@ class notion_client:
                     "start": time
                   }
                 },
+                "Full_Sync": {
+                    "checkbox": False
+                }
             }
         }
         data = json.dumps(page_data)

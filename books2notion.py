@@ -28,6 +28,7 @@ async def validate_time_diff(doc):
     if notion_last_sync_info is not None:
         logger.info(f"Found existing notion page having docs_id - {doc['docs_id']}")
         notion_last_sync_time = notion_last_sync_info["last_sync_time"]
+        full_sync_bool = notion_last_sync_info["full_sync_bool"]
         notion_time_string = notion_last_sync_time[:-10]
         doc_time_string = doc["modified_time"][:-5]
         notion_time = datetime.strptime(notion_time_string,"%Y-%m-%dT%H:%M:%S")
@@ -35,8 +36,8 @@ async def validate_time_diff(doc):
         doc_time = doc_time + timedelta(hours=5,minutes=30)
         
         time_diff = (doc_time - notion_time).total_seconds()/60
-        if time_diff > 5:
-            logger.info("Time differance is greater than 5 minutes, intitiializing syncing process")
+        if time_diff > 5 or full_sync_bool:
+            logger.info("Time differance is greater than 5 minutes or full_sync mode is enabled, intitiializing syncing process")
             return_info = {
                     "page_id":notion_last_sync_info["page_id"],
                     "progress_no":notion_last_sync_info["progress_no"],
@@ -44,6 +45,7 @@ async def validate_time_diff(doc):
                     "parsed_highlights":notion_last_sync_info["parsed_highlights"],
                     "parsed_notes":notion_last_sync_info["parsed_notes"],
                     "parsed_new_words":notion_last_sync_info["parsed_new_words"],
+                    "full_sync_bool":full_sync_bool
             }
             return return_info
         else:
@@ -54,15 +56,18 @@ async def validate_time_diff(doc):
         return None
 
 
-async def sync(mode):
+async def sync():
     docs = list_docs.ids()
     for doc in docs:
         last_sync_response = await validate_time_diff(doc)
         if last_sync_response is not False:
+            mode = "append"
             parsed_document = None
             page_id = ""
             new_words_id = ""
             if last_sync_response is not None:
+                if last_sync_response["full_sync_bool"]:
+                    mode = "sync-full"
                 page_id = last_sync_response["page_id"]
                 page_id = re.sub("-","",str(page_id))
                 new_words_id = await notion_query.get_new_words_id(page_id)
@@ -118,5 +123,5 @@ async def sync(mode):
         else:
             logger.info(f"Document({doc['docs_id']}) highlights and notes are already synced with notion ")
 
-def main(mode="append"):
-    asyncio.run(sync(mode))
+def main():
+    asyncio.run(sync())
