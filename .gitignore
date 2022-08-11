@@ -4,3 +4,5 @@ secrets.json
 __pycache__
 covers
 books2notion.log
+.env
+README.md
