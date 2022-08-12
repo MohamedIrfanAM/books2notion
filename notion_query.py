@@ -66,6 +66,23 @@ class notion_client:
             self.logger.error("Failed to find last_sync time or PageID")
             return None
 
+    def utc_to_local(self,utc_time):
+        time_offset_str = str(os.getenv('TIME_OFFSET'))
+        time_offset_re = re.search(r"([\+\-])(\d\d):(\d\d)",time_offset_str)
+        if time_offset_re is not None:
+            offset_hours = int(time_offset_re.group(2))
+            offset_minutes = int(time_offset_re.group(3))
+            time_offset = timedelta(hours=offset_hours,minutes=offset_minutes)
+
+            if time_offset_re.group(1) == '+':
+                local_time = utc_time + time_offset
+                return local_time
+            elif time_offset_re.group(1) == '-':
+                local_time = utc_time - time_offset
+                return local_time
+        else:
+            self.logger.error("Time offset env variable doesn't exist or wrong format")
+
     async def create_page(self,urls,properties,children):
         page_data = {
             "parent": { 
@@ -604,8 +621,8 @@ class notion_client:
 
     async def update_properties(self,page_id,parsed_document):
         utc_now = datetime.utcnow()
-        ist_now = str(utc_now + timedelta(hours=5,minutes=30))
-        time = (re.sub(' ','T',ist_now[:-3]))+"+05:30"
+        local_now = str(self.utc_to_local(utc_now))
+        time = (re.sub(' ','T',local_now[:-3]))+ str(os.getenv('TIME_OFFSET'))
         update_url = f"{self.page_url}/{page_id}"
         page_data = {
             "properties" : {

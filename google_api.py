@@ -48,7 +48,8 @@ def connect(api,version):
                 f.write("NOTION_KEY=\n")
                 f.write("NOTION_DATABASE_ID=\n")
                 f.write("DRIVE_FOLDER_ID=\n")
-                f.write("IMAGE_HOST_KEY=")
+                f.write("IMAGE_HOST_KEY=\n")
+                f.write("TIME_OFFSET=")
             os.remove(CLIENT_FILE)
             quit()
 

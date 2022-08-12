@@ -4,7 +4,7 @@ from doc_parser import document
 import cover
 from metadata_fetcher import book
 from dictionary import dictionary_class
-from datetime import datetime,timedelta
+from datetime import datetime
 import logging
 import sys
 import re
@@ -32,9 +32,8 @@ async def validate_time_diff(doc):
         notion_time_string = notion_last_sync_time[:-10]
         doc_time_string = doc["modified_time"][:-5]
         notion_time = datetime.strptime(notion_time_string,"%Y-%m-%dT%H:%M:%S")
-        doc_time = datetime.strptime(doc_time_string,"%Y-%m-%dT%H:%M:%S")
-        doc_time = doc_time + timedelta(hours=5,minutes=30)
-        
+        doc_time_utc = datetime.strptime(doc_time_string,"%Y-%m-%dT%H:%M:%S")
+        doc_time = notion_query.utc_to_local(doc_time_utc)
         time_diff = (doc_time - notion_time).total_seconds()/60
         if time_diff >= 0 or full_sync_bool:
             logger.info("New changes found or full_sync mode is enabled, intitiializing syncing process")
