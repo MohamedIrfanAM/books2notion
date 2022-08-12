@@ -25,6 +25,7 @@ def connect(api,version):
                 "scopes":SCOPES,
                 "expiry":os.getenv('EXPIRY')
                 }
+        logger.info("Found Google API token")
         creds = Credentials.from_authorized_user_info(token_data,SCOPES)
 
     if not creds or not creds.valid:
@@ -35,6 +36,7 @@ def connect(api,version):
             os.environ['REFRESH_TOKEN']= str(creds_json['refresh_token'])
             os.environ['EXPIRY']= str(creds_json['expiry'])
         else:
+            logger.info("Couldn't found API token, starting browser authentication")
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE,SCOPES)
             creds = flow.run_local_server(port=2048)
             creds_json = json.loads(creds.to_json())
@@ -50,6 +52,7 @@ def connect(api,version):
                 f.write("DRIVE_FOLDER_ID=\n")
                 f.write("IMAGE_HOST_KEY=\n")
                 f.write("TIME_OFFSET=")
+            logger.info("API token credentials written to '.env' file")
             os.remove(CLIENT_FILE)
             quit()
 
