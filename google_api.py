@@ -7,11 +7,14 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import logging
 import json
+import pathlib
 
 logger = logging.getLogger(__name__)
 
 def connect(api,version):
-    CLIENT_FILE = "credentials.json"
+    CLIENT_FILE_NAME = "credentials.json"
+    CLIENT_FILE = os.path.join(pathlib.Path(__file__).parent.resolve(),CLIENT_FILE_NAME)
+    print(CLIENT_FILE,CLIENT_FILE_NAME)
     SCOPES = ["https://www.googleapis.com/auth/books","https://www.googleapis.com/auth/documents","https://www.googleapis.com/auth/drive"]
     creds = None
 
