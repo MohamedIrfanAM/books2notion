@@ -39,6 +39,7 @@
         * [e. Fill env variables](#e-fill-env-variables)
         * [f. add buildback](#f-add-buildback)
         * [g. deploy application](#g-deploy-application)
+        * [h. start dyno](#h-start-dyno)
       - [Local](#local)
 
 ---
@@ -209,6 +210,10 @@ goto https://dashboard.heroku.com/apps and you find your app, it might not be na
 ```
 git push heroku deployment:main
 ```
+##### h. start dyno
+**Go to resources and toggle on dyno**   
+<img src=https://i.imgur.com/PXy68JJ.png width="550">    
+
 **Now that's it, we have successfully deployed application.**   
 
 #### Local
