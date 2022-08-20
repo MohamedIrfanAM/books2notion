@@ -23,31 +23,49 @@ class book:
             query += f" inauthor:{author}"
         query += f" inpublisher:{self.publisher}"
 
-        books_query = gbooks.volumes().list(q = query,orderBy = "relevance",langRestrict ="en-GB,en").execute()["items"][0]
-        book_query_response = books_query["volumeInfo"]
-        self.thumbnail = book_query_response["imageLinks"]["thumbnail"]
-        self.isbn = book_query_response["industryIdentifiers"][0]["identifier"]
-        self.id = books_query['id']
-
         try:
-            self.isbn = int(self.isbn)
-        except:
-            self.isbn = 0
+            books_query = gbooks.volumes().list(q = query,orderBy = "relevance",langRestrict ="en-GB,en").execute()["items"][0]
+            book_query_response = books_query["volumeInfo"]
 
-        if "description" in book_query_response:
-            self.about = book_query_response["description"]
-        else:
+            if "imageLinks" in book_query_response:
+                self.thumbnail = book_query_response["imageLinks"]["thumbnail"]
+            else:
+                self.thumbnail = None
+            if "industryIdentifiers" in book_query_response:
+                self.isbn = book_query_response["industryIdentifiers"][0]["identifier"]
+            else:
+                self.isbn = 0
+            if "id" in book_query_response:
+                self.id = books_query['id']
+            else:
+                self.id = ""
+            if "description" in book_query_response:
+                self.about = book_query_response["description"]
+            else:
+                self.about = ""
+            if "categories" in book_query_response:
+                self.categories = book_query_response["categories"]
+            else:
+                self.categories = []
+            if "pageCount" in book_query_response:
+                self.page_count = book_query_response["pageCount"]
+            else:
+                self.page_count = 0
+            if "publishedDate" in book_query_response:
+                self.publishedDate = book_query_response["publishedDate"]
+            else:
+                self.publishedDate = ""
+
+            try:
+                self.isbn = int(self.isbn)
+            except:
+                self.isbn = 0
+        except:
+            self.thumbnail = None
+            self.isbn = 0
+            self.id = ""
             self.about = ""
-        if "categories" in book_query_response:
-            self.categories = book_query_response["categories"]
-        else:
             self.categories = []
-        if "pageCount" in book_query_response:
-            self.page_count = book_query_response["pageCount"]
-        else:
             self.page_count = 0
-        if "publishedDate" in book_query_response:
-            self.publishedDate = book_query_response["publishedDate"]
-        else:
             self.publishedDate = ""
 

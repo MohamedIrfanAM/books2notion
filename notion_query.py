@@ -88,18 +88,20 @@ class notion_client:
             "parent": { 
                 "database_id": self.database_id 
             },
-            "icon": {
+            "properties": properties,
+            "children": children
+        }
+        if urls is not None:
+            page_data['icon'] = {
                 "external": {
                     "url": urls["icon"]
                 }
-            },
-            "cover": {
+            }
+            page_data['cover'] = {
                 "external": {
                     "url": urls["cover"] 
                 }
-            },
-            "properties": properties, "children": children
-        }
+            }
         page_data = json.dumps(page_data)
         try:
             response = requests.post(self.page_url,headers=self.headers,data=page_data)

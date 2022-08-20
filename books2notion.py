@@ -88,7 +88,10 @@ async def sync():
             else:
                 parsed_document = document(doc["docs_id"])
                 metadata = book(parsed_document.title)
-                urls = cover.get_url(metadata.thumbnail)
+                if metadata.thumbnail is not None:
+                    urls = cover.get_url(metadata.thumbnail)
+                else:
+                    urls = None
                 properties = notion_query.get_page_properties(parsed_document,metadata,doc["docs_id"])
                 children = notion_query.get_header_children(metadata)
                 page_id = str( await notion_query.create_page(urls,properties,children))
