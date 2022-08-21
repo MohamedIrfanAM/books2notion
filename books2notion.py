@@ -88,6 +88,8 @@ async def sync():
             else:
                 parsed_document = document(doc["docs_id"])
                 metadata = book(parsed_document.title)
+                if not metadata.found_book:
+                    continue
                 if metadata.thumbnail is not None:
                     urls = cover.get_url(metadata.thumbnail)
                 else:
