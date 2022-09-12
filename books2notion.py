@@ -40,19 +40,19 @@ async def validate_time_diff(doc):
         doc_time = doc_time + timedelta(hours=5,minutes=30)
         
         time_diff = (doc_time - notion_time).total_seconds()/60
-        if time_diff > 5:
-            logger.info("Time differance is greater than 5 minutes, intitiializing syncing process")
+        if time_diff > 0:
+            logger.info("Time differance is greater than 0 minutes, intitiializing syncing process")
             return_info = {
-                    "page_id":notion_last_sync_info["page_id"],
-                    "progress_no":notion_last_sync_info["progress_no"],
-                    "parsed_chapters":notion_last_sync_info["parsed_chapters"],
-                    "parsed_highlights":notion_last_sync_info["parsed_highlights"],
-                    "parsed_notes":notion_last_sync_info["parsed_notes"],
-                    "parsed_new_words":notion_last_sync_info["parsed_new_words"],
+                    "page_id":notion_last_sync_info["page_id"]
+                    # "progress_no":notion_last_sync_info["progress_no"],
+                    # "parsed_chapters":notion_last_sync_info["parsed_chapters"],
+                    # "parsed_highlights":notion_last_sync_info["parsed_highlights"],
+                    # "parsed_notes":notion_last_sync_info["parsed_notes"],
+                    # "parsed_new_words":notion_last_sync_info["parsed_new_words"],
             }
             return return_info
         else:
-            logger.info("Time difference is less than 5 minutes")
+            logger.info("Time difference is less than 0 minutes")
             return False
     else:
         logger.info(f"couldn't find existing notion page for docs_id - {doc['docs_id']}, creating a new page.")

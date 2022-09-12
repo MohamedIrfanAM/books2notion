@@ -11,6 +11,7 @@ class document:
         self.id = id
         self.progress_no = progress_no
         self.json = docs.documents().get(documentId=id).execute()
+        # logger.warning(f"JSON: {self.json}")
         self.title = self.json["title"][12:-1]
         logger.info(f"Parsing {self.title}({self.id}) started")
         self.author = self.json["body"]["content"][2]["table"]["tableRows"][0]["tableCells"][1]["content"][1]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
@@ -56,22 +57,32 @@ class document:
                             chapter_highlights = 0
 
                 except:
+                    logger.info("Exception Block 1")
                     pass
                 try:
+                    incrementer = 0
+                    
                     highlight = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][0]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
                     note = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][2]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
+                    
+                    if (note == "Why can't I see my highlighted text"):
+                        incrementer = 2
+                        note = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][2+incrementer]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
+                    
                     highlight = re.sub("\xa0+", "", highlight)
-                    color = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][0]["paragraph"]["elements"][0]["textRun"]["textStyle"]["backgroundColor"]["color"]["rgbColor"]["red"]
-                    date = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][2]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
+                    color = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][0]["paragraph"]["elements"][0]["textRun"]["textStyle"]["foregroundColor"]["color"]["rgbColor"]["red"]
+                    date = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][4+incrementer]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
                     pageNo = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][2]["content"][0]["paragraph"]["elements"][0]["textRun"]["content"]
                     url = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][2]["content"][0]["paragraph"]["elements"][0]["textRun"]["textStyle"]["link"]["url"]
+                    
                     regex_find_date = re.compile(r'\w{3,9}\W\d{1,2},\W\d{4}')
                     if regex_find_date.search(note):
                         note = None
                     else:
-                        date = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][4]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
+                        date = self.json["body"]["content"][i]["table"]["tableRows"][0]["tableCells"][0]["content"][1]["table"]["tableRows"][0]["tableCells"][1]["content"][4+incrementer]["paragraph"]["elements"][0]["textRun"]["content"][0:-1]
                         self.total_notes += 1
                         chapter_notes += 1
+                    
 
                     if int(color) == 1:
                         color = "red"
@@ -98,10 +109,12 @@ class document:
                             self.total_highlights += 1
                             chapter_highlights += 1
                             self.highlights[len(self.chapters)-1].append(highlight_data)
+                        
                 except:
                     pass
             else:
                 self.chapters[len(self.chapters)-1]["notes"] = chapter_notes
                 self.chapters[len(self.chapters)-1]["highlights"] = chapter_highlights
                 self.progress_no = (len(self.json["body"]["content"])-1)
+            logger.info(f"Final Chapter Information: {self.chapters}")
             logger.info(f"Parsing {self.title}({self.id}) completed")

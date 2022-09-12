@@ -43,19 +43,19 @@ class notion_client:
             response = await self.client.post(self.query_url,headers=self.headers,data=filter_data)
             last_sync_time = response.json()["results"][0]["properties"]["last_sync"]["date"]["start"]
             page_id = response.json()["results"][0]["id"]
-            progress_no = response.json()["results"][0]["properties"]["parse_progress"]["number"]
-            parsed_chapters = response.json()["results"][0]["properties"]["Chapter Count"]["number"]
-            parsed_highlights = response.json()["results"][0]["properties"]["Highlight Count"]["number"]
-            parsed_notes = response.json()["results"][0]["properties"]["Note Count"]["number"]
-            parsed_new_words = response.json()["results"][0]["properties"]["New Words Count"]["number"]
+            # progress_no = response.json()["results"][0]["properties"]["parse_progress"]["number"]
+            # parsed_chapters = response.json()["results"][0]["properties"]["Chapter Count"]["number"]
+            # parsed_highlights = response.json()["results"][0]["properties"]["Highlight Count"]["number"]
+            # parsed_notes = response.json()["results"][0]["properties"]["Note Count"]["number"]
+            # parsed_new_words = response.json()["results"][0]["properties"]["New Words Count"]["number"]
             last_sync_info = {
                     "last_sync_time":last_sync_time,
-                    "page_id":page_id,
-                    "progress_no": progress_no,
-                    "parsed_chapters": parsed_chapters,
-                    "parsed_highlights":parsed_highlights,
-                    "parsed_notes": parsed_notes,
-                    "parsed_new_words":parsed_new_words
+                    "page_id":page_id
+                    # "progress_no": progress_no,
+                    # "parsed_chapters": parsed_chapters,
+                    # "parsed_highlights":parsed_highlights,
+                    # "parsed_notes": parsed_notes,
+                    # "parsed_new_words":parsed_new_words
             }
             if response.status_code == 200 and last_sync_time is not None:
                 self.logger.info(f"Found last_sync time and PageID = {page_id}")
@@ -116,16 +116,16 @@ class notion_client:
                     }
                   ]
                 },
-                "Publisher": {
-                  "rich_text": [
-                    {
-                      "type": "text",
-                      "text": {
-                        "content": metadata.publisher
-                      },
-                    }
-                  ]
-                },
+                # "Publisher": {
+                #   "rich_text": [
+                #     {
+                #       "type": "text",
+                #       "text": {
+                #         "content": metadata.publisher
+                #       },
+                #     }
+                #   ]
+                # },
                 "docs_id": {
                   "rich_text": [
                     { "type": "text",
@@ -135,32 +135,57 @@ class notion_client:
                     }
                   ]
                 },
-                "books_id": {
-                  "rich_text": [
-                    {
-                      "type": "text",
-                      "text": {
-                        "content": metadata.id
-                      },
+                # "books_id": {
+                #   "rich_text": [
+                #     {
+                #       "type": "text",
+                #       "text": {
+                #         "content": metadata.id
+                #       },
+                #     }
+                #   ]
+                # },
+                # "Highlight Count": {
+                #     "number": int(parsed_document.total_highlights)
+                # },
+                # "New Words Count": {
+                #     "number": int(parsed_document.total_new_words)
+                # },
+                # "Page Count": {
+                #     "number": int(metadata.page_count)
+                # },
+                # "Note Count": {
+                #     "number": int(parsed_document.total_notes)
+                # },
+                # "ISBN": {
+                #     "number": int(metadata.isbn)
+                # },
+                "Medium": {
+                    "select": {
+                        "name": "Books"
                     }
-                  ]
                 },
-                "Highlight Count": {
-                    "number": int(parsed_document.total_highlights)
+                "Category": {
+                    "select": {
+                        "name": "UNCATEGORIZED"
+                    }
                 },
-                "New Words Count": {
-                    "number": int(parsed_document.total_new_words)
+                "Project": {
+                    "select": {
+                        "name": "UNORGANIZED"
+                    }
                 },
-                "Page Count": {
-                    "number": int(metadata.page_count)
+                "Summary": {
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Book from Kindle"
+                            }
+                        },
+                    ]
                 },
-                "Note Count": {
-                    "number": int(parsed_document.total_notes)
-                },
-                "ISBN": {
-                    "number": int(metadata.isbn)
-                },
-                "Link": {
+                "Source": {
                     "url": metadata.url
                 }
             }
@@ -543,7 +568,7 @@ class notion_client:
                             "href":None
                         }
                     ],
-                    "color":highlight["color"]
+                    "color":"default"
                 }
         }
         spacer_block = {
@@ -577,7 +602,7 @@ class notion_client:
                         "type":"emoji",
                         "emoji":"💡"
                     },
-                    "color":f"{highlight['color']}_background"
+                    "color":"gray_background"
                 }
             }
             highlight_data_blocks = [highlight_block,note_block,spacer_block]
@@ -602,21 +627,21 @@ class notion_client:
         update_url = f"{self.page_url}/{page_id}"
         page_data = {
             "properties" : {
-                "Highlight Count": {
-                    "number": int(parsed_document.total_highlights)
-                },
-                "New Words Count": {
-                    "number": int(parsed_document.total_new_words)
-                },
-                "Note Count": {
-                    "number": int(parsed_document.total_notes)
-                },
-                "Chapter Count": {
-                    "number": int(parsed_document.total_chapters)
-                },
-                "parse_progress": {
-                    "number": int(parsed_document.progress_no)
-                },
+                # "Highlight Count": {
+                #     "number": int(parsed_document.total_highlights)
+                # },
+                # "New Words Count": {
+                #     "number": int(parsed_document.total_new_words)
+                # },
+                # "Note Count": {
+                #     "number": int(parsed_document.total_notes)
+                # },
+                # "Chapter Count": {
+                #     "number": int(parsed_document.total_chapters)
+                # },
+                # "parse_progress": {
+                #     "number": int(parsed_document.progress_no)
+                # },
                 "last_sync": {
                   "date": {
                     "start": time
