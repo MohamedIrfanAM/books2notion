@@ -1,1 +1,1 @@
-worker: python books2notion.py
+worker: python books2notion.py --mode sync
